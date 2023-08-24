@@ -77,11 +77,11 @@ export default async function handler(req, res) {
     
         if (decision.every(el => el.status === 'accept')) {
             // update accountStatus to active
-            user.accountStatus = 'active';
+            user.accountStatus = 'pending';
             // update all profileStatus's to active
             // add niches and tags to the profile
             user.socialMediaLinks.forEach(sm => {
-                sm.profileStatus = 'active';
+                sm.profileStatus = 'pending';
                 decision.forEach(el => {
                     if (sm.platformName === el.platform) {
                         sm.niche = el.niche;
@@ -183,7 +183,7 @@ export default async function handler(req, res) {
 
         } else if (decision.some(dec => dec.status === 'reject') && decision.some(dec => dec.status === 'accept')) {
             // update accountStatus to active
-            user.accountStatus = 'active';
+            user.accountStatus = 'pending';
             let approvedPlatforms = [];
             let rejectedPlatforms = [];
             for (let i = 0; i < decision.length; i++) {
@@ -193,7 +193,7 @@ export default async function handler(req, res) {
                     // update the platform's status
                     for (let link of user.socialMediaLinks) {
                         if (link.platformName === decision[i].platform) {
-                            link.profileStatus = 'active';
+                            link.profileStatus = 'pending';
                             link.niche = decision[i].niche;
                             link.audience = decision[i].nicheTags.split(',').map(word => word.trim())
                         }
