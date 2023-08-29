@@ -1,5 +1,4 @@
-import { Schema } from "mongoose";
-import { getUserDbConnection } from "../connectUserDB";
+import { Schema, model } from "mongoose";
 
 const MediaContentSchema = new Schema({
     mediaType: {
@@ -51,11 +50,14 @@ const PostSchema = new Schema({
         required: true
     },
     platform: String,
-    publishingDate: Date,
-    content: PostContentSchema,
-    comment: String, // for rejected posts
     postLink: String, // for published posts
-    postId: String // post ID from the platform API
+    postId: String, // post ID from the platform API
+    publishingDate: Date,
+    // before the review, this represents the date at which 
+    // user hit publish after the review this should be 
+    // updated to the actual publishing date (in case of accepting the post)
+    content: PostContentSchema, // after publishing remove the content
+    comment: String, // for rejected posts
 });
 
 const SocialMediaLinkSchema = new Schema({
@@ -69,20 +71,26 @@ const SocialMediaLinkSchema = new Schema({
     }, 
     profileStatus: {
         type: String,
-        enum: ["new", "disabled", "active", "pending"],
-        // "New": profile has just been linked.
+        enum: ["inReview", "pendingPay", "pendingAuth", "active", "canceled"],
+        // "New": profile is available to be applied for.
+        // "InReview": profile is in review.
         // "Disabled": profile disabled by admin for quality and other issues.(rare case)
         // "Active": profile is fully active. 
-        // "Pending": awaiting user upgrading his plan. You'll have to send an email with
-        // a link to the Stripe management page in which he has to upgrade the plan. The email
-        // will expires after 24H. Otherwise, he can find the link above the platform in 
+        // "Pending": awaiting user payment
         // Settings > Linked Accounts, or he/she can click on the manage billing and pay from there. 
         required: true
         // If rejected, we remove the profile and send him a message on why 
         // we rejected him and that when he fulfills the reqs, he can a send a profile linking req
     }, 
+    pricePlans: {
+        type: [String]
+    },
     niche: {
         type: String
+    },
+    lastPublished: {
+        type: Date,
+        default: null
     },
     audience: {
         type: [String],
@@ -114,8 +122,8 @@ const UserSchema = new Schema({
     },
     accountStatus: {
         type: String,
-        enum: ["new","disabled", "active", "pending"],
-        // "New": account has just been created.
+        enum: ["inReview", "disabled", "active", "pending"],
+        // "inReview": account is being reviewed.
         // "Disabled": account has been disabled by admin for quality and other issues.(rare case)
         // "Active": account is fully active.
         // "Pending": awaiting user payment/onboarding before activation. You'll have to send an email
@@ -131,16 +139,22 @@ const UserSchema = new Schema({
     initialPlanChosen: {
         type: String
     },
+    onboardingStep: {
+        type: Number,
+        default: 0
+    },
+    applicationDate: {
+        type: String, 
+        required: true
+    },
     stripeId: {
         type: String,
         unique: true
     },
-    applicationDate: {
-        type: String,
-    },
     socialMediaLinks: [SocialMediaLinkSchema],
     posts: [PostSchema]
 });
+
 
 const userDbConnection = await getUserDbConnection();
 const UserModel = userDbConnection.model("User", UserSchema);
