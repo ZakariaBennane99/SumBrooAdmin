@@ -12,7 +12,11 @@ const Dashboard = () => {
         <Header />
         <div className="welcome-container">
             <div className="applications" onClick={() => { router.push('/dashboard/applications'); }}>
-                User Applications
+                New User Applications
+            </div>
+
+            <div className="applications" onClick={() => { router.push('/dashboard/applications'); }}>
+                Existing User Applications
             </div>
 
             <div className="posts" onClick={() => { router.push('/dashboard/posts'); }}>

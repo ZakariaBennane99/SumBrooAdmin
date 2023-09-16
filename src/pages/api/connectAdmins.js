@@ -1,5 +1,5 @@
-import { connectAdminDB } from '../../../utils/connectAdminDB';
-import AdminModel from '../../../utils/User';
+import connectAdminDB from '../../../utils/connectAdminDB';
+import Admin from '../../../utils/Admin';
 import jwt from 'jsonwebtoken';
 
 
@@ -18,9 +18,8 @@ export default async function handler(req, res) {
     const cleanUsername = username.replace(/[^a-zA-Z0-9_]/g, '');
     const cleanPassword = password; // You might want to avoid altering the password too much, but apply necessary security measures.
 
-    console.log(cleanUsername)
-    let user = await AdminModel.findOne({  username: cleanUsername })
-    let users = await AdminModel.find()
+    let user = await Admin.findOne({  username: cleanUsername })
+    let users = await Admin.find()
 
     console.log('All Users', users)
 

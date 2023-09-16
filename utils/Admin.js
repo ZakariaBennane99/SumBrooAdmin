@@ -1,5 +1,4 @@
 import { Schema } from "mongoose";
-import { getAdminDbConnection } from "./connectAdminDB";
 
 const AdminSchema = new Schema({
     username: {
@@ -18,7 +17,11 @@ const AdminSchema = new Schema({
 });
 
 
-const adminDbConnection = await getAdminDbConnection();
-const AdminModel = adminDbConnection.model("Admin", AdminSchema);
+let Admin;
+try {
+    Admin = model('Admin');
+} catch {
+    Admin = model('Admin', AdminSchema);
+}
 
-export default AdminModel;
+export default Admin;

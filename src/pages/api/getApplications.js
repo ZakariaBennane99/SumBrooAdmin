@@ -1,5 +1,5 @@
-import { connectUserDB } from '../../../utils/connectUserDB';
-import UserModel from '../../../utils/customers/User';
+import connectUserDB from '../../../utils/connectUserDB';
+import User from '../../../utils/customers/User';
 
 
 export default async function handler(req, res) {
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     // GET: userName, platforms, date (Which is already formatted) in an array of OBJ
   
     try {
-        const users = await UserModel.find(
+        const users = await User.find(
           { accountStatus: 'new' }, 
           'name applicationDate socialMediaLinks.platformName socialMediaLinks.profileLink' 
           // This second parameter is a space-separated list that defines which fields to select

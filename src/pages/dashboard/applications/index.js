@@ -27,7 +27,7 @@ const Applications = ({ data }) => {
 
 
     useEffect(() => {
-        if (data.users.length > 0) {
+        if (data && data.users.length > 0) {
             localForage.setItem('applications', data.users).then(() => {
                 console.log('Data has been stored in IndexedDB.');
             }).catch(error => {
@@ -41,13 +41,13 @@ const Applications = ({ data }) => {
         <Header />
         <div className="applications-container">
             {
-              data.users.length === 0 ?
+              data && data.users.length === 0 ?
                 <img src="/zenMode.svg" width={200} />
                :''
             }
 
             {
-                data.users && data.users.map((user, i) => {
+                data && data.users.map((user, i) => {
                     return (<div key={i} className="application-container" 
                     onClick={() => router.push(`/dashboard/applications/${user._id}`)}>
                         <p>{user.name}</p>
@@ -94,6 +94,8 @@ export async function getServerSideProps(context) {
         },
       };
     }
+
+    console.log('After the verification')
 
     let data;
 

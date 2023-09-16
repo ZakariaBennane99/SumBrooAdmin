@@ -1,5 +1,5 @@
-import { connectUserDB } from '../../../utils/connectUserDB';
-import UserModel from '../../../utils/customers/User';
+import connectUserDB from '../../../utils/connectUserDB';
+import User from '../../../utils/customers/User';
 import { verifyToken } from '../../../utils/verifyToken';  
 import { parseCookies } from '../../../utils/parseCookies';
 import { SESClient, SendTemplatedEmailCommand } from "@aws-sdk/client-ses";
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
     
         const { userId, decision } = req.body
     
-        const user = await UserModel.findOne({ _id: userId })
+        const user = await User.findOne({ _id: userId })
     
         if (decision.every(el => el.status === 'accept')) {
             // update accountStatus to active

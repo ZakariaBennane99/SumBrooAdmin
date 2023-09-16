@@ -24,10 +24,6 @@ const PinterestTextualDataSchema = new Schema({
     destinationLink: {
         type: String,
         required: true
-    },
-    board: {
-        type: String,
-        required: true
     }
 });
 
@@ -44,6 +40,9 @@ const PostContentSchema = new Schema({
 });
 
 const PostSchema = new Schema({
+    postTitle: {
+        type: String
+    },
     postStatus: {
         type: String,
         enum: ["in review", "rejected", "published"],
@@ -53,11 +52,23 @@ const PostSchema = new Schema({
     postLink: String, // for published posts
     postId: String, // post ID from the platform API
     publishingDate: Date,
+    // UTC time
     // before the review, this represents the date at which 
     // user hit publish after the review this should be 
     // updated to the actual publishing date (in case of accepting the post)
     content: PostContentSchema, // after publishing remove the content
+    targetingNiche: {
+        type: String,
+        required: true
+    },
+    targetingTags: {
+        type: [String],
+        required: true
+    },
     comment: String, // for rejected posts
+    analytics: {
+        type: Schema.Types.Mixed
+    }
 });
 
 const SocialMediaLinkSchema = new Schema({
@@ -69,9 +80,12 @@ const SocialMediaLinkSchema = new Schema({
         type: String,
         required: true
     }, 
+    profileUserName: {
+        type: String
+    },
     profileStatus: {
         type: String,
-        enum: ["inReview", "pendingPay", "pendingAuth", "active", "canceled"],
+        enum: ["inReview", "pendingPay", "pendingAuth", "active", "canceled", "authExpired"],
         // "New": profile is available to be applied for.
         // "InReview": profile is in review.
         // "Disabled": profile disabled by admin for quality and other issues.(rare case)
@@ -84,6 +98,9 @@ const SocialMediaLinkSchema = new Schema({
     }, 
     pricePlans: {
         type: [String]
+    },
+    description: {
+        type: String
     },
     niche: {
         type: String
@@ -104,10 +121,15 @@ const SocialMediaLinkSchema = new Schema({
     accessToken: {
         type: String
     },
+    accesstokenExpirationDate: {
+        type: Date
+    }, 
     refreshToken: {
         type: String
     },
-    tokenExpirationDate: Number,
+    refreshTokenExpirationDate: {
+        type: Date
+    } 
 });
 
 const UserSchema = new Schema({
@@ -156,7 +178,12 @@ const UserSchema = new Schema({
 });
 
 
-const userDbConnection = await getUserDbConnection();
-const UserModel = userDbConnection.model("User", UserSchema);
 
-export default UserModel;
+let User;
+try {
+    User = model('User');
+} catch {
+    User = model('User', UserSchema);
+}
+
+export default User;
