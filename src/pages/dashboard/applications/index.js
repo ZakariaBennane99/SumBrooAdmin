@@ -2,7 +2,7 @@ import { parseCookies } from "../../../../utils/parseCookies"
 import { verifyToken } from "../../../../utils/verifyToken";
 import Header from "../../../../components/Header";
 import localForage from 'localforage';
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
 
 
@@ -24,7 +24,6 @@ function getHoursLeft(dateString) {
 const Applications = ({ data }) => {
 
     const router = useRouter();
-
 
     useEffect(() => {
         if (data && data.users.length > 0) {
@@ -95,16 +94,12 @@ export async function getServerSideProps(context) {
       };
     }
 
-    console.log('After the verification')
-
     let data;
 
     try {
-      const response = await fetch('http://localhost:3001/api/getApplications', {
+      const response = await fetch('http://localhost:3000/api/getApplications', {
         method: 'GET'
       });
-
-      console.log(response)
     
       if (!response.ok) {
         throw new Error('Server error');
@@ -113,15 +108,13 @@ export async function getServerSideProps(context) {
       data = await response.json();
     
     } catch (error) {
-      console.error('Server error', error.message);
+      console.error('The error', error);
       return {
         props: {
           error: true
         }
       };
     }
-
-    console.log(data, typeof data)
 
     return {
       props: {

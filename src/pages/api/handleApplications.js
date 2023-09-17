@@ -4,6 +4,7 @@ import { verifyToken } from '../../../utils/verifyToken';
 import { parseCookies } from '../../../utils/parseCookies';
 import { SESClient, SendTemplatedEmailCommand } from "@aws-sdk/client-ses";
 import jwt from 'jsonwebtoken';
+import { check, validationResult } from 'express-validator';
 
 
 function generateOnboardingToken(userId) {
@@ -53,6 +54,17 @@ export default async function handler(req, res) {
     const token = cookies.auth; 
     if (!token || !verifyToken(token)) {
       return res.status(400).json({ error: 'Server error' });
+    }
+
+
+    // check the data
+    await check('userId').isString().run(req);
+    await check('decision').isIn(['accepted', 'rejected']).run(req);
+  
+    // Find validation errors
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      return res.status(400).json({ errors: result.array() });
     }
 
     // connectUserDB

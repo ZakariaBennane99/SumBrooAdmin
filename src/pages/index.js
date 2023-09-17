@@ -25,7 +25,6 @@ const Home = () => {
 
     async function handleSend() {
 
-      console.log('Clicked')
         try {
           const response = await fetch('/api/connectAdmins', {
             method: 'POST', 
@@ -42,7 +41,6 @@ const Home = () => {
       
           const data = await response.json();
 
-          console.log(response)
           // save Admin Name to localStorage
           localStorage.setItem('adminName', data.adminName);
           router.push('/dashboard')

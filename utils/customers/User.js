@@ -48,11 +48,14 @@ const PostSchema = new Schema({
         enum: ["in review", "rejected", "published"],
         required: true
     },
+    hostUserId: {
+        type: String,
+        required: true
+    },
     platform: String,
     postLink: String, // for published posts
-    postId: String, // post ID from the platform API
+    postId: String, // for published posts: post ID from the platform API
     publishingDate: Date,
-    // UTC time
     // before the review, this represents the date at which 
     // user hit publish after the review this should be 
     // updated to the actual publishing date (in case of accepting the post)
@@ -80,9 +83,6 @@ const SocialMediaLinkSchema = new Schema({
         type: String,
         required: true
     }, 
-    profileUserName: {
-        type: String
-    },
     profileStatus: {
         type: String,
         enum: ["inReview", "pendingPay", "pendingAuth", "active", "canceled", "authExpired"],
@@ -113,9 +113,9 @@ const SocialMediaLinkSchema = new Schema({
         type: [String],
         validate: {
             validator: function(array) {
-                return array.length <= 6;
+                return array.length <= 10;
             },
-            message: 'Audience array size should not exceed 6 tags.'
+            message: 'Audience array size should not exceed 10 tags.'
         }
     },
     accessToken: {
@@ -129,7 +129,8 @@ const SocialMediaLinkSchema = new Schema({
     },
     refreshTokenExpirationDate: {
         type: Date
-    } 
+    },
+    posts: [PostSchema]
 });
 
 const UserSchema = new Schema({
@@ -173,8 +174,7 @@ const UserSchema = new Schema({
         type: String,
         unique: true
     },
-    socialMediaLinks: [SocialMediaLinkSchema],
-    posts: [PostSchema]
+    socialMediaLinks: [SocialMediaLinkSchema]
 });
 
 

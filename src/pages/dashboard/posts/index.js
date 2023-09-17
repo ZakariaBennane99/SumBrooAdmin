@@ -7,7 +7,7 @@ import { useRouter } from "next/router";
 
 
 
-const Applications = ({ data }) => {
+const Posts = ({ posts }) => {
 
     const router = useRouter();
 
@@ -38,7 +38,7 @@ const Applications = ({ data }) => {
                         <p>{user.name}</p>
                         <div>{
                             user.socialMediaLinks.map((socialMedia, index) => {
-                                return <img key={index} width={25} src={`/sm/${socialMedia.platformName}.svg`} />
+                               return <img key={index} width={25} src={`/sm/${socialMedia.platformName}.svg`} />
                             })
                         }</div>
                         <p>{getHoursLeft(user.applicationDate)}</p>
@@ -52,7 +52,7 @@ const Applications = ({ data }) => {
 
 };
 
-export default Applications;
+export default Posts;
 
 
 
@@ -80,10 +80,10 @@ export async function getServerSideProps(context) {
       };
     }
 
-    let data;
+    let posts;
 
     try {
-      const response = await fetch('http://localhost:3001/api/getApplications', {
+      const response = await fetch('http://localhost:3000/api/getPosts', {
         method: 'GET'
       });
 
@@ -93,7 +93,7 @@ export async function getServerSideProps(context) {
         throw new Error('Server error');
       }
     
-      data = await response.json();
+      posts = await response.json();
     
     } catch (error) {
       console.error('Server error', error.message);
@@ -108,7 +108,7 @@ export async function getServerSideProps(context) {
 
     return {
       props: {
-        data
+        posts
       }
     };
 }

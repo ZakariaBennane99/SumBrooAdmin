@@ -54,7 +54,7 @@ const Application = ({ userId }) => {
 
     async function handleSendClick() {
         try {
-            const response = await fetch('http://localhost:3001/api/handleApplications', {
+            const response = await fetch('http://localhost:3000/api/handleApplications', {
               method: 'POST', 
               headers: {
                 'Content-Type': 'application/json'
