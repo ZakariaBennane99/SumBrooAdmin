@@ -3,11 +3,7 @@ import ReactPlayer from "react-player";
 import _ from 'lodash';
 
 
-const PinterestPostPreview = ({ pinTitle, pinLink, text, imgUrl, videoUrl }) => {
-
-    const profileUserNames = JSON.parse(localStorage.getItem('userProfileNames'))
-
-    const userDtPin = profileUserNames.find(elem => elem.platform === 'pinterest')
+const PinterestPostPreview = ({ pinTitle, pinLink, text, imgUrl, videoUrl, userProfileLink }) => {
 
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [playing, setPlaying] = useState(false);
@@ -176,7 +172,7 @@ const PinterestPostPreview = ({ pinTitle, pinLink, text, imgUrl, videoUrl }) => 
                 </div>
                 { pinLink ? <a href={pinLink} target="_blank">{extractDomain(pinLink)}</a> : '' }
                 <p className='pinTitle' onClick={ () => {window.open(pinLink, '_blank')} }>{_.startCase(pinTitle)}</p>
-                <p className='pinDesc'>{parseText(text)} | 📌 by <span className='hashtag' onClick={ () => {window.open(`${userDtPin.link}`, '_blank')} }>#{userDtPin.userName}</span></p>
+                <p className='pinDesc'>{parseText(text)} | 📌 by <span className='hashtag' onClick={ () => {window.open(`${userProfileLink}`, '_blank')} }>#userProfileLink</span></p>
                 <div className='pinnerInfo'>
                     <div>
                         <img src='/sm/pinterest.svg' />

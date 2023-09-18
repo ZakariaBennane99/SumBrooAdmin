@@ -37,7 +37,7 @@ const Posts = ({ posts }) => {
             {
                 posts && posts.map((post, i) => {
                     return (<div key={i} className="post-container" 
-                    onClick={() => router.push(`/dashboard/posts/${post.userId}`)}>
+                    onClick={() => router.push(`/dashboard/posts/${post.userId}-${post.platform}`)}>
                         <p>{_.startCase(post.pinTitle)}</p>
                         <div>
                           <img width={25} src={`/sm/${post.platform}.svg`} />
