@@ -1,11 +1,17 @@
 import { parseCookies } from "../../../../utils/parseCookies"
 import { verifyToken } from "../../../../utils/verifyToken";
 import Header from "../../../../components/Header";
-import PinterestPreview from "../../../../components/PinterestPreview"
+import PinterestPreview from "../../../../components/PinterestPreview";
+import { Tadpole } from "react-svg-spinners";
 import { useState } from "react";
 
 
 const Post = ({ post }) => {
+
+  const userId = post.userId;
+  const platform = post.platform;
+
+  const [submitClicked, setSubmitClicked] = useState(false);
 
   const [isReject, setIsReject] = useState(false);
   const [comment, setComment] = useState("");
@@ -17,6 +23,50 @@ const Post = ({ post }) => {
   const handleCommentChange = (event) => {
     setComment(event.target.value);
   };
+
+
+  async function handleSubmit() {
+
+    setSubmitClicked(true)
+
+    // here you have to send whether the post was 
+    // accepted or rejected, if rejected include 
+    // comment. The comment should be 
+    // a series of phrases each start with an emoji
+    // and ends with / (to split the phrases and
+    // present them nicely to the user)
+
+    try {
+
+      const response = await fetch('http://localhost:3000/api/postReview', {
+        method: 'POST', 
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId, platform, isReject, comment })
+      });
+    
+      if (!response.ok) {
+        setSubmitClicked(false)
+        throw new Error('Server error');
+      }
+      
+      setSubmitClicked(false)
+
+      let data = await response.json();
+
+      console.log('The response', data)
+
+    
+    } catch (error) {
+      console.error('Server error', error.message);
+      return {
+        props: {
+          error: true
+        }
+      };
+    }
+  }
 
   return (
     <div className="dashboard-container">
@@ -56,7 +106,12 @@ const Post = ({ post }) => {
               />
             </div>
           )}
-          <button>Submit</button>
+          <button className={`${submitClicked ? 'publish-btn-loading' : ''}`}
+               onClick={handleSubmit} disabled={submitClicked}>
+                {
+                  submitClicked ? <Tadpole height={50} color='white' /> : 'Submit'
+                }
+          </button>
         </div>
         <PinterestPreview
           pinTitle={post.pinTitle}

@@ -746,14 +746,24 @@ body {
     cursor: pointer;
     display: flex;
     justify-content: center;
+    margin-top: 20px;
     align-items: center;
-    height: 60px;
+    padding:  5px 5px;
     border: none;
     border-radius: 6px;
     background: rgb(20,101,224);
     color: white;
     font-family: 'Ubuntu';
-    font-size: 2em;
+    font-size: 1.5em;
     font-weight: 500;
     transition: all 0.2s;
+}
+
+.decision-container button:hover {
+    background-color: #1c1c57;
+}
+
+.publish-btn-loading {
+    background: #73739a !important;
+    cursor: auto !important;
 }
