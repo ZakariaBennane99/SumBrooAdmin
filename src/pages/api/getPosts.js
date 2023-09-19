@@ -19,27 +19,27 @@ export default async function handler(req, res) {
   
     try {
 
-        const postsInReview = await User.aggregate([
-            // Unwind the arrays to denormalize the data
-            { $unwind: "$socialMediaLinks" },
-            { $unwind: "$socialMediaLinks.posts" },
-          
-            // Match posts with "in review" status
-            { $match: { "socialMediaLinks.posts.postStatus": "in review" } },
-          
-            // Project only the necessary fields
-            {
-              $project: {
-                userId: "$_id",
-                pinTitle: "$socialMediaLinks.posts.content.textualData.pinterest.title",
-                publishingDate: "$socialMediaLinks.posts.publishingDate",
-                platform: "$socialMediaLinks.posts.platform",
-              },
+      const postsInReview = await User.aggregate([
+          // Unwind the arrays to denormalize the data
+          { $unwind: "$socialMediaLinks" },
+          { $unwind: "$socialMediaLinks.posts" },
+        
+          // Match posts with "in review" status
+          { $match: { "socialMediaLinks.posts.postStatus": "in review" } },
+        
+          // Project only the necessary fields
+          {
+            $project: {
+              userId: "$_id",
+              pinTitle: "$socialMediaLinks.posts.content.textualData.pinterest.title",
+              publishingDate: "$socialMediaLinks.posts.publishingDate",
+              platform: "$socialMediaLinks.posts.platform",
             },
-        ]);
+          },
+      ]);
 
-        // the postInReview returns an array of objects
-        return res.status(200).json({ postsInReview });
+      // the postInReview returns an array of objects
+      return res.status(200).json({ postsInReview });
 
     } catch (err) {
         console.error("Error retrieving users:", err);

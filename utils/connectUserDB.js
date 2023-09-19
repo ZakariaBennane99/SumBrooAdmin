@@ -4,11 +4,6 @@ const connectUserDB = async () => {
 
   try {
 
-    if (mongoose.connection.readyState === 1) {
-      console.log('MongoDB is already connected');
-      return;
-    }
-
     await mongoose.connect(process.env.MONGO_DB_USERS, {
       useNewUrlParser: true,
       useUnifiedTopology: true,

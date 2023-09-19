@@ -137,8 +137,6 @@ export async function getServerSideProps(context) {
     
       let data = await response.json();
 
-      console.log('this is the data', data)
-
       // here set the data to the posts before your return it
       post = data.post;
     
