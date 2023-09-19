@@ -1,7 +1,6 @@
 import connectUserDB from '../../../utils/connectUserDB';
 import User from '../../../utils/customers/User';
 import { check, validationResult } from 'express-validator';
-import mongoose from 'mongoose';
 
 
 

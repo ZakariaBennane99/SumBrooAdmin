@@ -28,26 +28,27 @@ const Posts = ({ posts }) => {
     return (<div className="dashboard-container">
         <Header />
         <div className="posts-container">
-            {
-              posts.length === 0 ?
-                <img src="/zenMode.svg" width={200} />
-               :''
-            }
 
-            {
-                posts && posts.map((post, i) => {
-                    return (<div key={i} className="post-container" 
-                    onClick={() => router.push(`/dashboard/posts/${post.userId}-${post.platform}`)}>
-                        <p>{_.startCase(post.pinTitle)}</p>
-                        <div>
-                          <img width={25} src={`/sm/${post.platform}.svg`} />
-                        </div>
-                        <p>{getHoursLeft(post.publishingDate)}</p>
-                    </div>)
-                })
-            }
+          {
+            posts.length === 0 ?
+              <img src="/zenMode.svg" width={200} />
+             :''
+          }
+
+          {
+            posts && posts.map((post, i) => {
+              return (<div key={i} className="post-container" 
+              onClick={() => router.push(`/dashboard/posts/${post.userId}-${post.platform}`)}>
+                  <p>{_.startCase(post.pinTitle)}</p>
+                  <div>
+                    <img width={25} src={`/sm/${post.platform}.svg`} />
+                  </div>
+                  <p>{getHoursLeft(post.publishingDate)}</p>
+              </div>)
+            })
+          }
+          
         </div>
-
     </div>
     )
 
