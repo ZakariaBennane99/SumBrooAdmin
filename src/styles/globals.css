@@ -338,3 +338,351 @@ body {
     padding: 2px 5px 2px 5px;
     width: 50%;
 }
+
+
+/* This is for the PinterestPreview */
+
+.pinterestPostPreview {
+    font-family: -apple-system, BlinkMacSystemFont, 
+    "Segoe UI", Roboto, "Oxygen-Sans", Ubuntu, Cantarell, 
+    "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, 
+    "Hiragino Kaku Gothic Pro W3", "Hiragino Kaku Gothic Pro", 
+    Meiryo, "MS Gothic", Arial, sans-serif, "Apple Color Emoji", 
+    "Segoe UI Emoji", "Segoe UI Symbol";
+    background-color: #ffffff;
+    border-radius: 10px;
+    filter: drop-shadow(0px 0px 6px #e4e4e4);
+    margin-top: 15px;
+}
+
+.pinterestPostPreview .mainImg {
+    width: 100%;
+    position: relative;
+    color: #000000;
+}
+
+.pinterestPostPreview .mainImg .main {
+    width: 100%;
+    margin-top: 0px;
+    height: auto;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.pinterestPostPreview .mainImg .videoContainer {
+    position: relative;
+}
+
+.pinterestPostPreview .mainImg .videoControllers {
+    width: 100%;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    height: 50px;
+    background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.8));
+    position: absolute;
+    color: white;
+    font-size: .8em;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.pinterestPostPreview .mainImg .videoControllers .time {
+    margin-bottom: 4px;
+}
+
+.pinterestPostPreview .mainImg .videoControllers img {
+    height: 18px;
+    cursor: pointer;
+}
+
+
+.pinterestPostPreview .mainImg video {
+    object-fit: contain !important;
+    cursor: pointer;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.pinterestPostPreview .linkOnMedia, 
+.pinterestPostPreview .zoomOnMedia {
+    position: absolute;
+}
+
+.pinterestPostPreview .linkOnMedia {
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(255, 255, 255);
+    bottom: 15px;
+    left: 15px;
+    padding: 10px;
+    border-radius: 20px;
+}
+
+.pinterestPostPreview .linkOnMedia:hover {
+    background-color: rgb(238, 238, 238);
+}
+
+.pinterestPostPreview .linkOnMedia div {
+    font-weight: 500;
+    font-size: .85em;
+}
+
+.pinterestPostPreview .linkOnMedia img {
+    width: 12px;
+    margin-right: 8px;
+}
+
+.pinterestPostPreview .zoomOnMedia {
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(244, 244, 244);
+    bottom: 15px;
+    right: 15px;
+    padding: 7px;
+    border-radius: 50%;
+}
+
+.pinterestPostPreview .zoomOnMedia img {
+    width: 15px;
+}
+
+.pinterestPostPreview .pinDetails .saveDetails {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+}
+
+.pinterestPostPreview .pinDetails a {
+    color: black;
+    border-bottom: 1.5px solid black;
+    cursor: pointer;
+    font-size: .85em;
+    margin-left: 15px;
+}
+
+.pinterestPostPreview .pinDetails .pinTitle {
+    cursor: pointer;
+    color: black;
+    padding-left: 15px;
+    padding-right: 15px;
+    font-size: 1.5em;
+    font-weight: 500;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.pinterestPostPreview .pinDetails .pinDesc {
+    color: #000000;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-top: 0px;
+    display: inline-block;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 90%;
+    margin-bottom: 25px;
+}
+
+.pinterestPostPreview .pinDetails .saveDetails div {
+    display: flex;
+}
+
+.pinterestPostPreview .pinDetails .saveDetails div:nth-of-type(2) {
+    cursor: pointer;
+    background-color: #E60023;
+    color: white;
+    font-size: .9em;
+    justify-content: center;
+    align-items: center;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-radius: 18px;
+    width: 40px;
+}
+
+.pinterestPostPreview .pinDetails .saveDetails div:nth-of-type(2):hover {
+    background-color: #a7021b;
+}
+
+.pinterestPostPreview .pinDetails .saveDetails img {
+    width: 18px;
+    height: 18px;
+
+}
+
+.pinterestPostPreview .pinDetails .pinnerInfo div {
+    display: flex;
+}
+
+.pinterestPostPreview .pinDetails .pinnerInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: 15px;
+    margin-right: 15px;
+}
+
+.pinterestPostPreview .pinDetails .pinnerInfo div:nth-of-type(2) {
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+    background-color: #f3f3f3;
+    width: 60px;
+    padding: 7px;
+    border-radius: 18px;
+}
+
+.pinterestPostPreview .pinDetails .pinnerInfo div:nth-of-type(2):hover {
+    background-color: #e4e4e4;
+}
+
+.pinterestPostPreview .pinDetails .pinnerInfo div:nth-of-type(1) div {
+    display: flex;
+    flex-direction: column;
+}
+
+.pinterestPostPreview .pinDetails .pinnerInfo div:nth-of-type(1) div p {
+    color: #000000;
+    margin: 0px;
+}
+
+.pinterestPostPreview .pinDetails .pinnerInfo div:nth-of-type(1) div p:nth-of-type(1) {
+    cursor: pointer;
+    font-size: .9em;
+    font-weight: 500;
+}
+
+.pinterestPostPreview .pinDetails .pinnerInfo div:nth-of-type(1) div p:nth-of-type(2) {
+    font-size: .8em;
+    font-weight: 400;
+}
+
+
+.pinterestPostPreview .pinDetails .pinnerInfo {
+    display: flex;
+}
+
+.pinterestPostPreview .pinDetails .pinnerInfo img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-right: 7px;
+}
+
+.pinterestPostPreview .pinDetails .saveDetails span {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.pinterestPostPreview .pinDetails .saveDetails span:hover {
+    background-color: #ececec;
+}
+
+.pinterestPostPreview .pinDetails .comments {
+    color: #000000;
+    font-size: 1.1em;
+    font-weight: 500;
+    margin-left: 15px;
+    margin-top: 25px;
+}
+
+.pinterestPostPreview .pinDetails .comments span {
+    color: #7d7d7d;
+    font-size: .85em;
+    font-weight: 400;
+}
+
+.pinterestPostPreview hr {
+    margin-top: 25px;
+    height: 1px;
+    background-color: #ececec;
+    border: none;
+}
+
+.pinterestPostPreview .bottomSection {
+    display: flex;
+    flex-direction: column;
+}
+
+.pinterestPostPreview .bottomSection div:nth-of-type(1) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-left: 15px;
+    margin-right: 15px;
+    margin-bottom: 15px;
+}
+
+.pinterestPostPreview .bottomSection div:nth-of-type(1) img {
+    width: 22px;
+}
+
+.pinterestPostPreview .bottomSection div:nth-of-type(1) span {
+    background-color: #ececec;
+    width: 20px;
+    height: 20px;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.pinterestPostPreview .bottomSection div:nth-of-type(1) p {
+    color: #000000;
+    font-size: 1.2em;
+    font-weight: 500;
+    margin: 0px;
+}
+
+.pinterestPostPreview .bottomSection div:nth-of-type(2) {
+    display: flex;
+    margin-left: 15px;
+    margin-right: 15px;
+    margin-bottom: 15px;
+}
+
+.pinterestPostPreview .bottomSection div:nth-of-type(2) img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.pinterestPostPreview .bottomSection div:nth-of-type(2) div {
+    background-color: #ececec;
+    width: 100%;
+    border-radius: 50px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 15px;
+    color: #a2a2a2;
+    margin: 0px;
+    cursor: pointer;
+}
+
+.hashtag {
+    color: #3578E5;
+    cursor: pointer;
+}
+
+.hashtag:hover {
+    text-decoration: underline;
+}

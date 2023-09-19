@@ -45,7 +45,7 @@ const PostSchema = new Schema({
     },
     postStatus: {
         type: String,
-        enum: ["in review", "rejected", "published"],
+        enum: ["in review", "rejected", "published"], 
         required: true
     },
     hostUserId: {

@@ -2,90 +2,75 @@ import { parseCookies } from "../../../../utils/parseCookies"
 import { verifyToken } from "../../../../utils/verifyToken";
 import Header from "../../../../components/Header";
 import PinterestPreview from "../../../../components/PinterestPreview"
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 
-
-function getHoursLeft(dateString) {
-
-  const dateObj = new Date(dateString); // Ensure it's treated as UTC
-
-  const now = new Date();
-  const nowUTC = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds());
+const Post = ({ post }) => {
   
-  const diffMilliseconds = nowUTC - dateObj;
-  const diffHours = Math.floor(diffMilliseconds / (1000 * 60 * 60));
-  
-  const result = `${48 - diffHours} Hours left`;
-  return result
-  
-}
+  const [isReject, setIsReject] = useState(false);
+  const [comment, setComment] = useState("");
 
-const Application = ({ post }) => {
+  const handleRejectChange = (event) => {
+    setIsReject(event.target.checked);
+  };
 
-    const [app, setApp] = useState(null)
+  const handleCommentChange = (event) => {
+    setComment(event.target.value);
+  };
 
-    const [selected, setSelected] = useState([]);
-
-    const isSelected = (platformName, status) => {
-      const platform = selected.find(item => item.platform === platformName);
-      return platform && platform.status === status;
-    };
-
-    const handleClick = (platformName, value) => {
-      const updatedList = selected.filter(item => item.platform !== platformName);
-      updatedList.push({ platform: platformName, status: value });
-      setSelected(updatedList);
-    };
-
-    useEffect(() => {
-        localForage.getItem('applications').then(data => {
-            console.log(data.filter(dt => dt._id === userId))
-            setApp(data.filter(dt => dt._id === userId))
-        }).catch(error => {
-            console.error('Error getting data from IndexedDB:', error);
-        });
-    }, []);
-
-    const handleExternalClick = (e) => {
-        window.open(e.currentTarget.getAttribute('data-url'), "_blank");
-    };
-
-    async function handleSendClick() {
-        try {
-            const response = await fetch('http://localhost:3000/api/handleApplications', {
-              method: 'POST', 
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ userId: userId, decision: selected })
-            });
-        
-            if (!response.ok) {
-              throw new Error('Server error');
-            }
-        
-            const data = await response.json();
-            console.log(data)
-            router.push('/dashboard/applications')
-          } catch (error) {
-            console.error('Server error', error.message);
-          }
-    }
-
-    return (<div className="dashboard-container">
-        <Header />
-        <div className="applications-container">
-            <PinterestPreview 
-               
-            />
+  return (
+    <div className="dashboard-container">
+      <Header />
+      <div className="applications-container">
+        <PinterestPreview
+          pinTitle={post.pinTitle}
+          pinLink={post.pinLink}
+          text={post.content.textualData.pinterest.description}
+          imgUrl={post.content.media.mediaType === 'image' ? post.content.media.awsLink : ''}
+          videoUrl={post.content.media.mediaType === 'video' ? post.content.media.awsLink : ''}
+          userProfileLink={post.profileLink}
+        />
+        <div>
+          <div>
+            <label>Accept/Reject</label>
+            <div>
+              <label>
+                Accept
+                <input
+                  type="radio"
+                  name="acceptReject"
+                  checked={!isReject}
+                  onChange={() => setIsReject(false)}
+                />
+              </label>
+              <label>
+                Reject
+                <input
+                  type="radio"
+                  name="acceptReject"
+                  checked={isReject}
+                  onChange={() => setIsReject(true)}
+                />
+              </label>
+            </div>
+          </div>
+          {isReject && (
+            <div>
+              <label>Comment</label>
+              <textarea
+                value={comment}
+                onChange={handleCommentChange}
+                placeholder="A comment on the rejection"
+              />
+            </div>
+          )}
         </div>
+      </div>
     </div>
-    )
-
+  );
 };
 
-export default Application;
+export default Post;
 
 
 export async function getServerSideProps(context) {
@@ -134,8 +119,10 @@ export async function getServerSideProps(context) {
       if (!response.ok) {
         throw new Error('Server error');
       }
-    
+
       let data = await response.json();
+
+      console.log('The response', data)
 
       // here set the data to the posts before your return it
       post = data.post;
