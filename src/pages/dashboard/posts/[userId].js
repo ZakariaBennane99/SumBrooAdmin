@@ -6,7 +6,7 @@ import { useState } from "react";
 
 
 const Post = ({ post }) => {
-  
+
   const [isReject, setIsReject] = useState(false);
   const [comment, setComment] = useState("");
 
@@ -21,18 +21,10 @@ const Post = ({ post }) => {
   return (
     <div className="dashboard-container">
       <Header />
-      <div className="applications-container">
-        <PinterestPreview
-          pinTitle={post.pinTitle}
-          pinLink={post.pinLink}
-          text={post.content.textualData.pinterest.description}
-          imgUrl={post.content.media.mediaType === 'image' ? post.content.media.awsLink : ''}
-          videoUrl={post.content.media.mediaType === 'video' ? post.content.media.awsLink : ''}
-          userProfileLink={post.profileLink}
-        />
-        <div>
-          <div>
-            <label>Accept/Reject</label>
+      <div className="post-Info-container">
+        <div className="decision-container">
+          <div className="text-section">
+            <label className="label">Acceptance/Rejection</label>
             <div>
               <label>
                 Accept
@@ -55,7 +47,7 @@ const Post = ({ post }) => {
             </div>
           </div>
           {isReject && (
-            <div>
+            <div className="comment-section">
               <label>Comment</label>
               <textarea
                 value={comment}
@@ -64,7 +56,16 @@ const Post = ({ post }) => {
               />
             </div>
           )}
+          <button>Submit</button>
         </div>
+        <PinterestPreview
+          pinTitle={post.pinTitle}
+          pinLink={post.pinLink}
+          text={post.content.textualData.pinterest.description}
+          imgUrl={post.content.media.mediaType === 'image' ? post.content.media.awsLink : ''}
+          videoUrl={post.content.media.mediaType === 'video' ? post.content.media.awsLink : ''}
+          userProfileLink={post.profileLink}
+        />
       </div>
     </div>
   );

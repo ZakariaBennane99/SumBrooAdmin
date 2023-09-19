@@ -352,7 +352,7 @@ body {
     background-color: #ffffff;
     border-radius: 10px;
     filter: drop-shadow(0px 0px 6px #e4e4e4);
-    margin-top: 15px;
+    width: 400px;
 }
 
 .pinterestPostPreview .mainImg {
@@ -685,4 +685,75 @@ body {
 
 .hashtag:hover {
     text-decoration: underline;
+}
+
+.post-Info-container {
+    width: 93%;
+    margin-top: 60px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+
+.decision-container {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 7px;
+    filter: drop-shadow(0px 0px 6px #e4e4e4);
+    width: 500px;
+    height: fit-content;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.decision-container .label {
+    font-size: 1.3em;
+    font-weight: bold;
+}
+
+.decision-container .comment-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.decision-container .comment-section label {
+    margin-bottom: 10px;
+}
+
+.decision-container .comment-section textarea {
+    resize: vertical;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.decision-container .comment-section textarea:focus {
+    outline: 2px solid#1465e7;
+}
+
+.decision-container .text-section {
+    height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.decision-container button {
+    width: 100%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+    border: none;
+    border-radius: 6px;
+    background: rgb(20,101,224);
+    color: white;
+    font-family: 'Ubuntu';
+    font-size: 2em;
+    font-weight: 500;
+    transition: all 0.2s;
 }
