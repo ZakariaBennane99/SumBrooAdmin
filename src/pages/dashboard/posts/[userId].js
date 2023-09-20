@@ -8,6 +8,7 @@ import { useState } from "react";
 
 const Post = ({ post }) => {
 
+  const postId = post.postId
   const userId = post.userId;
   const platform = post.platform;
 
@@ -43,7 +44,7 @@ const Post = ({ post }) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ userId, platform, isReject, comment })
+        body: JSON.stringify({ userId, postId, platform, isReject, comment })
       });
     
       if (!response.ok) {
@@ -109,7 +110,7 @@ const Post = ({ post }) => {
           <button className={`${submitClicked ? 'publish-btn-loading' : ''}`}
                onClick={handleSubmit} disabled={submitClicked}>
                 {
-                  submitClicked ? <Tadpole height={50} color='white' /> : 'Submit'
+                  submitClicked ? <Tadpole height={27} color='white' /> : 'Submit'
                 }
           </button>
         </div>
@@ -177,8 +178,6 @@ export async function getServerSideProps(context) {
       }
 
       let data = await response.json();
-
-      console.log('The response', data)
 
       // here set the data to the posts before your return it
       post = data.post;
