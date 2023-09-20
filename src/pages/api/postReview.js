@@ -27,7 +27,9 @@ export default async function handler(req, res) {
   
     try {
 
-      const { userId, platform, comment, isReject } = req.body;
+      const { userId, postId, platform, comment, isReject } = req.body;
+
+      const user = await User.findOne({ _id: userId })
 
       // now if success send a success email with a link 
       // to their live post, and update the status of the post 
@@ -36,6 +38,8 @@ export default async function handler(req, res) {
         // send an email with a desc with the comment, 
         // and prompt them to create a new post
         // and update the post to reject, and add the comment
+        const comments = comment.split('\n').map(str => str.trim());
+
       } else {
         // send an email with a link to their live post
         // and update the post to accept

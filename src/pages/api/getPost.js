@@ -53,6 +53,7 @@ export default async function handler(req, res) {
         // Project only the necessary fields
         {
           $project: {
+            postId: "$socialMediaLinks.posts._id",
             pinTitle: "$socialMediaLinks.posts.postTitle",
             publishingDate: "$socialMediaLinks.posts.publishingDate",
             content: "$socialMediaLinks.posts.content",
