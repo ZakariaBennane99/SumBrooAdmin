@@ -1,5 +1,3 @@
-import { parseCookies } from "../../../../utils/parseCookies"
-import { verifyToken } from "../../../../utils/verifyToken";
 import Header from "../../../../components/Header";
 import localForage from 'localforage';
 import { useEffect } from "react";
@@ -72,53 +70,62 @@ export default Applications;
 
 export async function getServerSideProps(context) {
 
-    const cookies = context.req.headers.cookie;
+  const { parseCookies } = require('../../../../utils/parseCookies');
+  const { verifyToken } = require('../../../../utils/verifyToken');
+  const connectUserDB = require('../../../../utils/connectUserDB');
+  const User = require('../../../../utils/customers/User');
+
+  const cookies = context.req.headers.cookie;
   
-    if (!cookies) {
-      return {
-        redirect: {
-          destination: '/',
-          permanent: false,
-        },
-      };
-    }
+  if (!cookies) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
   
-    const token = parseCookies(cookies).auth;
+  const token = parseCookies(cookies).auth;
     
-    if (!token || !verifyToken(token)) {
-      return {
-        redirect: {
-          destination: '/',
-          permanent: false,
-        },
-      };
-    }
+  if (!token || !verifyToken(token)) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
 
-    let data;
+  let data;
 
-    try {
-      const response = await fetch('http://localhost:3000/api/getApplications', {
-        method: 'GET'
-      });
-    
-      if (!response.ok) {
-        throw new Error('Server error');
-      }
-    
-      data = await response.json();
-    
-    } catch (error) {
-      console.error('The error', error);
-      return {
-        props: {
-          error: true
-        }
-      };
-    }
+  try {
 
+    // connectUserDB
+    await connectUserDB();
+
+    const users = await User.find(
+      { accountStatus: 'new' }, 
+      'name applicationDate socialMediaLinks.platformName socialMediaLinks.profileLink' 
+      // This second parameter is a space-separated list that defines which fields to select
+      // don't forget to add applicationDate just after the name
+    );
+  
+    data = users;
+  
+  } catch (error) {
+    console.error('The error', error);
     return {
       props: {
-        data
+        error: true
       }
     };
+  }
+
+  return {
+    props: {
+      data
+    }
+  };
+
 }

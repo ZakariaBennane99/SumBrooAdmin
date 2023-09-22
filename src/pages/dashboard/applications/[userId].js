@@ -1,5 +1,3 @@
-import { parseCookies } from "../../../../utils/parseCookies"
-import { verifyToken } from "../../../../utils/verifyToken";
 import Header from "../../../../components/Header";
 import localForage from 'localforage';
 import { useEffect, useState } from "react";
@@ -177,33 +175,37 @@ export default Application;
 
 export async function getServerSideProps(context) {
 
-    const cookies = context.req.headers.cookie;
-  
-    if (!cookies) {
-      return {
-        redirect: {
-          destination: '/',
-          permanent: false,
-        },
-      };
-    }
-  
-    const token = parseCookies(cookies).auth;
-    
-    if (!token || !verifyToken(token)) {
-      return {
-        redirect: {
-          destination: '/',
-          permanent: false,
-        },
-      };
-    }
+  const { parseCookies } = require('../../../../utils/parseCookies');
+  const { verifyToken } = require('../../../../utils/verifyToken');
 
-    const userId = context.query.userId;
+  const cookies = context.req.headers.cookie;
   
+  if (!cookies) {
     return {
-      props: {
-        userId
-      }
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
     };
+  }
+  
+  const token = parseCookies(cookies).auth;
+    
+  if (!token || !verifyToken(token)) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
+
+  const userId = context.query.userId;
+  
+  return {
+    props: {
+      userId
+    }
+  };
+
 }

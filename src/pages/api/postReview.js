@@ -42,6 +42,7 @@ export default async function handler(req, res) {
       // the platform will be needed later on if we have multiple platforms
 
       if (isReject) {
+
         // send an email with a desc with the comment, 
         // and prompt them to create a new post
         // and update the post to reject, and add the comment
@@ -142,11 +143,60 @@ export default async function handler(req, res) {
         });   
 
       } else {
-        // send an email with a link to their live post
-        // and update the post to accept
-        // then post the post to the target platform, and delete the 
-        // the media from AWS S3 bucket
 
+        // get the board belonging to the host user
+
+
+        // then you have to call the corresponding function
+        // the boards should already be in the admin page, then 
+        // he/she can choose the right board based off the content
+        if () {
+           
+        } else {
+
+        }
+
+
+
+
+        // update the postStatus and remove the content
+        // don't forget to remove the comment
+        await User.updateOne(
+          { "socialMediaLinks.posts._id": new mongoose.Types.ObjectId(postId) },
+          { 
+            $set: { "socialMediaLinks.$.posts.$[elem].postStatus": "published" },
+            $set: { "socialMediaLinks.$.posts.$[elem].comment": comment },
+            $unset: { "socialMediaLinks.$.posts.$[elem].content": "" }
+          },
+          { arrayFilters: [{ "elem._id": new mongoose.Types.ObjectId(postId) }] }
+        );
+
+        // delete the media from AWS S3
+        const FILE_KEY = 'pinterest-' + user
+        // Initialize the S3 Client
+        const s3Client = new S3Client({
+          region: process.env.AWS_REGION,
+          credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+          },
+        });
+
+        // Create a new instance of the DeleteObjectCommand
+        const command = new DeleteObjectCommand({
+          Bucket: 'sumbroo-media-upload',
+          Key: FILE_KEY,
+        });
+
+        try {
+          // Try to send the command to delete the object
+          await s3Client.send(command);
+          console.log(`File with KEY: ${FILE_KEY} deleted successfully`);
+        } catch (error) {
+          // Catch any error that occurs
+          console.error("Error deleting file:", error);
+          return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
+        }
         
 
       }

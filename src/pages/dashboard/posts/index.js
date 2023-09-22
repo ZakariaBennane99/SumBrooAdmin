@@ -1,5 +1,3 @@
-import { parseCookies } from "../../../../utils/parseCookies"
-import { verifyToken } from "../../../../utils/verifyToken";
 import Header from "../../../../components/Header";
 import { useRouter } from "next/router";
 import _ from 'lodash'
@@ -60,60 +58,78 @@ export default Posts;
 
 export async function getServerSideProps(context) {
 
-    const cookies = context.req.headers.cookie;
+  const { parseCookies } = require('../../../../utils/parseCookies');
+  const { verifyToken } = require('../../../../utils/verifyToken');
+  const connectUserDB = require('../../../../utils/connectUserDB');
+  const User = require('../../../../utils/customers/User');
+
+  const cookies = context.req.headers.cookie;
   
-    if (!cookies) {
-      return {
-        redirect: {
-          destination: '/',
-          permanent: false,
-        },
-      };
-    }
+  if (!cookies) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
   
-    const token = parseCookies(cookies).auth;
+  const token = parseCookies(cookies).auth;
     
-    if (!token || !verifyToken(token)) {
-      return {
-        redirect: {
-          destination: '/',
-          permanent: false,
+  if (!token || !verifyToken(token)) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
+
+  let posts;
+
+  try {
+
+    // connectUserDB
+    await connectUserDB();
+
+    const postsInReview = await User.aggregate([
+      // Unwind the arrays to denormalize the data
+      { $unwind: "$socialMediaLinks" },
+      { $unwind: "$socialMediaLinks.posts" },
+    
+      // Match posts with "in review" status
+      { $match: { "socialMediaLinks.posts.postStatus": "in review" } },
+    
+      // Project only the necessary fields
+      {
+        $project: {
+          userId: "$_id",
+          pinTitle: "$socialMediaLinks.posts.content.textualData.pinterest.title",
+          publishingDate: "$socialMediaLinks.posts.publishingDate",
+          platform: "$socialMediaLinks.posts.platform",
         },
-      };
-    }
+      },
+    ]);
 
-    let posts;
 
-    try {
+    // here set the data to the posts before your return it
+    posts = postsInReview;
+  
+  } catch (error) {
 
-      const response = await fetch('http://localhost:3000/api/getPosts', {
-        method: 'GET'
-      });
-    
-      if (!response.ok) {
-        throw new Error('Server error');
-      }
-    
-      let data = await response.json();
-
-      console.log('this is the data', data)
-
-      // here set the data to the posts before your return it
-      posts = data.postsInReview;
-    
-    } catch (error) {
-      console.error('Server error', error.message);
-      return {
-        props: {
-          error: true
-        }
-      };
-    }
-
+    console.error('Server error', error.message);
     return {
       props: {
-        posts
+        error: true
       }
     };
+
+  }
+
+  return {
+    props: {
+      posts
+    }
+  };
 
 }

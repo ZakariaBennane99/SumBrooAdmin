@@ -1,5 +1,3 @@
-import { parseCookies } from "../../../../utils/parseCookies"
-import { verifyToken } from "../../../../utils/verifyToken";
 import Header from "../../../../components/Header";
 import PinterestPreview from "../../../../components/PinterestPreview";
 import { Tadpole } from "react-svg-spinners";
@@ -132,69 +130,115 @@ export default Post;
 
 export async function getServerSideProps(context) {
 
-    const cookies = context.req.headers.cookie;
+  const { parseCookies } = require('../../../../utils/parseCookies');
+  const { verifyToken } = require('../../../../utils/verifyToken');
+  const connectUserDB = require('../../../../utils/connectUserDB');
+  const User = require('../../../../utils/customers/User');
+  const { check, validationResult } = require('express-validator');
+  const mongoose = require('mongoose');
+
+  const cookies = context.req.headers.cookie;
   
-    if (!cookies) {
-      return {
-        redirect: {
-          destination: '/',
-          permanent: false,
-        },
-      };
-    }
+  if (!cookies) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
   
-    const token = parseCookies(cookies).auth;
+  const token = parseCookies(cookies).auth;
     
-    if (!token || !verifyToken(token)) {
-      return {
-        redirect: {
-          destination: '/',
-          permanent: false,
-        },
-      };
+  if (!token || !verifyToken(token)) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
+
+  // now get the userId, and get the data
+  const { params } = context;
+  const userInfo = params.userId.split('-');
+
+  const userId = userInfo[0];
+  const platform = userInfo[1];
+
+  let post;
+
+  try {
+
+    // check the data
+    await check('userId').isString().run(req);
+    await check('platform').isString().run(req);
+    
+    // Find validation errors
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      return res.status(400).json({ errors: result.array() });
     }
 
-    // now get the userId, and get the data
-    const { params } = context;
-    const userInfo = params.userId.split('-');
+    // connectUserDB
+    await connectUserDB();
 
-    const userId = userInfo[0];
-    const platform = userInfo[1];
-
-    let post;
-
-    try {
-
-      const response = await fetch('http://localhost:3000/api/getPost', {
-        method: 'POST', 
-        headers: {
-          'Content-Type': 'application/json'
+    const postInReview = await User.aggregate([
+      // Match the specific user by ID and the specific platform
+      { 
+        $match: { 
+          _id: new mongoose.Types.ObjectId(userId),
+        } 
+      },
+      
+      // Unwind the arrays to denormalize the data
+      { $unwind: "$socialMediaLinks" },
+      { $unwind: "$socialMediaLinks.posts" },
+      
+      // Match posts with "in review" status and the specific platform
+      { 
+        $match: { 
+          $and: [
+            { "socialMediaLinks.posts.postStatus": "in review" },
+            { "socialMediaLinks.posts.platform": platform }, 
+          ]
+        } 
+      },
+      
+      // Project only the necessary fields
+      {
+        $project: {
+          postId: "$socialMediaLinks.posts._id",
+          pinTitle: "$socialMediaLinks.posts.postTitle",
+          publishingDate: "$socialMediaLinks.posts.publishingDate",
+          content: "$socialMediaLinks.posts.content",
+          targetingNiche: "$socialMediaLinks.posts.targetingNiche",
+          targetingTags: "$socialMediaLinks.posts.targetingTags",
+          hostUserId: "$socialMediaLinks.posts.hostUserId",
+          userName: "$name",
+          profileLink: "$socialMediaLinks.profileLink",
+          userId: userId,
+          platform: platform
         },
-        body: JSON.stringify({ userId, platform })
-      });
-    
-      if (!response.ok) {
-        throw new Error('Server error');
-      }
+      },
+    ]);
 
-      let data = await response.json();
-
-      // here set the data to the posts before your return it
-      post = data.post;
-    
-    } catch (error) {
-      console.error('Server error', error.message);
-      return {
-        props: {
-          error: true
-        }
-      };
-    }
-
+    // here set the data to the posts before your return it
+    post = postInReview[0];
+  
+  } catch (error) {
+    console.error('Server error', error.message);
     return {
       props: {
-        post
+        error: true
       }
     };
+  }
+
+  return {
+    props: {
+      post
+    }
+  };
 
 }
