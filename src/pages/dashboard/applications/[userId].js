@@ -28,8 +28,6 @@ const Application = ({ userId }) => {
       const platform = selected.find(item => item.platform === platformName);
       return platform && platform.status === status;
     };
-  
-    
 
     const handleClick = (platformName, value) => {
       const updatedList = selected.filter(item => item.platform !== platformName);

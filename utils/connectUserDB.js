@@ -1,23 +1,35 @@
 import mongoose from 'mongoose';
+import { UserSchema } from '../utils/customers/User'
 
-const connectUserDB = async () => {
-  try {
-    // Check if mongoose is already connected or connecting
-    if (mongoose.connection.readyState === 1) {
-      console.log('MongoDB already connected ...');
-      return;
-    }
+const connectUserDB = new Promise((resolve, reject) => {
+  // Check if a connection to the userDB already exists
+  const existingConnection = mongoose.connections.find(connection => 
+    connection.name === process.env.MONGO_DB_USERS
+  );
 
-    await mongoose.connect(process.env.MONGO_DB_USERS, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB Connected...');
-  } catch (err) {
-    console.error(err.message);
-    // Exit process with failure
-    process.exit(1);
+  if (existingConnection && existingConnection.readyState === 1) {
+    console.log('userDB is already connected!');
+    const UserModel = existingConnection.model('User', UserSchema);
+    return resolve(UserModel);
   }
-};
 
-module.exports = connectUserDB;
+  // If no existing connection, create a new one
+  const userDbConnection = mongoose.createConnection(process.env.MONGO_DB_USERS, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+
+  userDbConnection.on('connected', () => {
+    console.log('userDB has successfully connected!');
+    const UserModel = userDbConnection.model('User', UserSchema);
+    resolve(UserModel);
+  });
+
+  userDbConnection.on('error', (err) => {
+    console.error('userDB Connection error:', err);
+    reject(err);
+  });
+});
+
+export { connectUserDB };
+

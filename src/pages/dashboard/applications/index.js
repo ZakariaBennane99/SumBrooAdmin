@@ -21,46 +21,44 @@ function getHoursLeft(dateString) {
 
 const Applications = ({ data }) => {
 
-    const router = useRouter();
+  const router = useRouter();
 
-    useEffect(() => {
-        if (data && data.users.length > 0) {
-            localForage.setItem('applications', data.users).then(() => {
-                console.log('Data has been stored in IndexedDB.');
-            }).catch(error => {
-                console.error('Error saving data to IndexedDB:', error);
-            });
-        } 
-    }, [data]);
+  useEffect(() => {
+      if (data && data.length > 0) {
+          localForage.setItem('applications', data.users).then(() => {
+              console.log('Data has been stored in IndexedDB.');
+          }).catch(error => {
+              console.error('Error saving data to IndexedDB:', error);
+          });
+      } 
+  }, [data]);
 
 
-    return (<div className="dashboard-container">
-        <Header />
-        <div className="applications-container">
-            {
-              data && data.users.length === 0 ?
-                <img src="/zenMode.svg" width={200} />
-               :''
-            }
-
-            {
-                data && data.users.map((user, i) => {
-                    return (<div key={i} className="application-container" 
-                    onClick={() => router.push(`/dashboard/applications/${user._id}`)}>
-                        <p>{user.name}</p>
-                        <div>{
-                            user.socialMediaLinks.map((socialMedia, index) => {
-                                return <img key={index} width={25} src={`/sm/${socialMedia.platformName}.svg`} />
-                            })
-                        }</div>
-                        <p>{getHoursLeft(user.applicationDate)}</p>
-                    </div>)
-                })
-            }
-        </div>
-
-    </div>
-    )
+  return (<div className="dashboard-container">
+      <Header />
+      <div className="applications-container">
+          {
+            data && data.length === 0 ?
+              <img src="/zenMode.svg" width={200} />
+             :''
+          }
+          {
+              data && data.map((user, i) => {
+                  return (<div key={i} className="application-container" 
+                  onClick={() => router.push(`/dashboard/applications/${user._id}`)}>
+                      <p>{user.name}</p>
+                      <div>{
+                          user.socialMediaLinks.map((socialMedia, index) => {
+                              return <img key={index} width={25} src={`/sm/${socialMedia.platformName}.svg`} />
+                          })
+                      }</div>
+                      <p>{getHoursLeft(user.applicationDate)}</p>
+                  </div>)
+              })
+          }
+      </div>
+  </div>
+  )
 
 };
 
@@ -72,8 +70,7 @@ export async function getServerSideProps(context) {
 
   const { parseCookies } = require('../../../../utils/parseCookies');
   const { verifyToken } = require('../../../../utils/verifyToken');
-  const connectUserDB = require('../../../../utils/connectUserDB');
-  const User = require('../../../../utils/customers/User');
+  const { connectUserDB } = require('../../../../utils/connectUserDB');
 
   const cookies = context.req.headers.cookie;
   
@@ -102,9 +99,9 @@ export async function getServerSideProps(context) {
   try {
 
     // connectUserDB
-    await connectUserDB();
+    let UserModel = await connectUserDB;
 
-    const users = await User.find(
+    const users = await UserModel.find(
       { accountStatus: 'new' }, 
       'name applicationDate socialMediaLinks.platformName socialMediaLinks.profileLink' 
       // This second parameter is a space-separated list that defines which fields to select
@@ -122,6 +119,7 @@ export async function getServerSideProps(context) {
     };
   }
 
+  console.log('The data', data)
   return {
     props: {
       data

@@ -1,4 +1,5 @@
 import { Schema, model } from "mongoose";
+import mongoose from 'mongoose';
 
 const MediaContentSchema = new Schema({
     mediaType: {
@@ -179,11 +180,4 @@ const UserSchema = new Schema({
 
 
 
-let User;
-try {
-    User = model('User');
-} catch {
-    User = model('User', UserSchema);
-}
-
-export default User;
+export { UserSchema };

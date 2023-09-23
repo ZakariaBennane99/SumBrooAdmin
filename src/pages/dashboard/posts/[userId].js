@@ -6,6 +6,8 @@ import { useState } from "react";
 
 const Post = ({ post }) => {
 
+  console.log('THE PPST', post)
+
   const postId = post.postId
   const userId = post.userId;
   const platform = post.platform;
@@ -132,9 +134,7 @@ export async function getServerSideProps(context) {
 
   const { parseCookies } = require('../../../../utils/parseCookies');
   const { verifyToken } = require('../../../../utils/verifyToken');
-  const connectUserDB = require('../../../../utils/connectUserDB');
-  const User = require('../../../../utils/customers/User');
-  const { check, validationResult } = require('express-validator');
+  const { connectUserDB } = require('../../../../utils/connectUserDB');
   const mongoose = require('mongoose');
 
   const cookies = context.req.headers.cookie;
@@ -170,20 +170,10 @@ export async function getServerSideProps(context) {
 
   try {
 
-    // check the data
-    await check('userId').isString().run(req);
-    await check('platform').isString().run(req);
-    
-    // Find validation errors
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      return res.status(400).json({ errors: result.array() });
-    }
-
     // connectUserDB
-    await connectUserDB();
+    let UserModel = await connectUserDB;
 
-    const postInReview = await User.aggregate([
+    const postInReview = await UserModel.aggregate([
       // Match the specific user by ID and the specific platform
       { 
         $match: { 
@@ -224,7 +214,9 @@ export async function getServerSideProps(context) {
     ]);
 
     // here set the data to the posts before your return it
-    post = postInReview[0];
+    post = JSON.parse(JSON.stringify(postInReview[0]));
+
+    console.log('THE POST', post)
   
   } catch (error) {
     console.error('Server error', error.message);

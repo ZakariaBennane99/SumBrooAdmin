@@ -1,5 +1,4 @@
-import connectAdminDB from '../../../utils/connectAdminDB';
-import Admin from '../../../utils/Admin';
+import { connectAdminDB } from '../../../utils/connectAdminDB';
 import jwt from 'jsonwebtoken';
 
 
@@ -10,7 +9,7 @@ export default async function handler(req, res) {
     }
 
     // connectAdminDB
-    await connectAdminDB();
+    let AdminModel = await connectAdminDB;
   
     const { username, password } = req.body;
   
@@ -18,10 +17,7 @@ export default async function handler(req, res) {
     const cleanUsername = username.replace(/[^a-zA-Z0-9_]/g, '');
     const cleanPassword = password; // You might want to avoid altering the password too much, but apply necessary security measures.
 
-    let user = await Admin.findOne({  username: cleanUsername })
-    let users = await Admin.find()
-
-    console.log('All Users', users)
+    let user = await AdminModel.findOne({  username: cleanUsername });
 
     if (!user) {
         return res.status(400).json({ error: 'No user found.' });
@@ -35,7 +31,7 @@ export default async function handler(req, res) {
     const token = jwt.sign(
         { userId: user._id, username: user.username },
         process.env.JWT_SECRET,
-        { expiresIn: '1h' } 
+        { expiresIn: '5h' } 
     );
 
     res.setHeader('Set-Cookie', `auth=${token}; HttpOnly; Path=/; Max-Age=3600`);

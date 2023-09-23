@@ -28,7 +28,7 @@ const Posts = ({ posts }) => {
         <div className="posts-container">
 
           {
-            posts.length === 0 ?
+            posts && posts.length === 0 ?
               <img src="/zenMode.svg" width={200} />
              :''
           }
@@ -60,8 +60,7 @@ export async function getServerSideProps(context) {
 
   const { parseCookies } = require('../../../../utils/parseCookies');
   const { verifyToken } = require('../../../../utils/verifyToken');
-  const connectUserDB = require('../../../../utils/connectUserDB');
-  const User = require('../../../../utils/customers/User');
+  const { connectUserDB } = require('../../../../utils/connectUserDB');
 
   const cookies = context.req.headers.cookie;
   
@@ -88,11 +87,11 @@ export async function getServerSideProps(context) {
   let posts;
 
   try {
-
+    
     // connectUserDB
-    await connectUserDB();
+    let UserModel = await connectUserDB;
 
-    const postsInReview = await User.aggregate([
+    const postsInReview = await UserModel.aggregate([
       // Unwind the arrays to denormalize the data
       { $unwind: "$socialMediaLinks" },
       { $unwind: "$socialMediaLinks.posts" },
@@ -111,9 +110,8 @@ export async function getServerSideProps(context) {
       },
     ]);
 
-
     // here set the data to the posts before your return it
-    posts = postsInReview;
+    posts = JSON.parse(JSON.stringify(postsInReview));
   
   } catch (error) {
 

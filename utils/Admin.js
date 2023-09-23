@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema } from "mongoose";
 
 const AdminSchema = new Schema({
     username: {
@@ -16,12 +16,4 @@ const AdminSchema = new Schema({
     },
 });
 
-
-let Admin;
-try {
-    Admin = model('Admin');
-} catch {
-    Admin = model('Admin', AdminSchema);
-}
-
-export default Admin;
+export { AdminSchema };
