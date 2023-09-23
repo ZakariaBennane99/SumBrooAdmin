@@ -137,6 +137,69 @@ export async function getServerSideProps(context) {
   const { connectUserDB } = require('../../../../utils/connectUserDB');
   const mongoose = require('mongoose');
 
+  // in case the accessToken has expired
+  async function refreshTokenForUser(refToken) {
+
+    const authorization = `Basic ${Buffer.from(`1484362:${process.env.PINTEREST_APP_SECRET}`).toString('base64')}`;
+
+    try {
+        const response = await axios.post('https://api.pinterest.com/v5/oauth/token', null, {
+            headers: {
+                'Authorization': authorization,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            params: {
+                grant_type: 'refresh_token',
+                refresh_token: refToken
+            }
+        });
+
+        const data = response.data;
+        const now = new Date();
+        const currentUTCDate = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+
+        const tokenExpiryDate = new Date(currentUTCDate.getTime() + (data.expires_in * 1000));
+        const theNewToken = data.access_token;
+
+        return {
+          newToken: theNewToken,
+          expiryUTCDate: tokenExpiryDate
+        }
+
+    } catch (error) {
+        console.error('Error refreshing Pinterest token:', error.message);
+        return {
+          isError: true,
+        }
+    }
+  }
+
+
+  async function fetchBoards(token) {
+
+    const url = 'https://api.pinterest.com/v5/boards';
+  
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      return data
+    } catch (error) {
+      console.error('Fetching boards failed:', error);
+    }
+  }
+  
+
   const cookies = context.req.headers.cookie;
   
   if (!cookies) {
@@ -173,6 +236,26 @@ export async function getServerSideProps(context) {
     // connectUserDB
     let UserModel = await connectUserDB;
 
+    // get the user token, and the refresh token
+    let user = UserModel.findOne({ userId });
+
+    const platformData = user.socialMediaLinks.find(link => link.platform === platform);
+
+    // check the accessToken expiration
+    const now = new Date();
+    const currentUTCDate = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+
+    // check if the accessToken has expired
+    if (platformData.accesstokenExpirationDate <= currentUTCDate) {
+      // go refresh the token
+      const { theNewToken, expiryUTCDate } = await refreshTokenForUser(platformData.refreshToken);
+      // update the DB with the new token
+      platformData.accessToken = theNewToken;
+      platformData.accesstokenExpirationDate = expiryUTCDate;
+      await UserModel.save();
+    }
+
+    console.log('The user', user)
     const postInReview = await UserModel.aggregate([
       // Match the specific user by ID and the specific platform
       { 
@@ -212,6 +295,12 @@ export async function getServerSideProps(context) {
         },
       },
     ]);
+
+    // here connect to the user SM using the token, then
+    // get all the boards and insert them into the postInReview
+    const res = await fetchBoards(platformData.accessToken);
+    
+    console.log('This is the data', res)
 
     // here set the data to the posts before your return it
     post = JSON.parse(JSON.stringify(postInReview[0]));
