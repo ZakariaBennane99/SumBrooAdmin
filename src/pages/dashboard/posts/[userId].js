@@ -6,8 +6,6 @@ import { useState } from "react";
 
 const Post = ({ post }) => {
 
-  console.log('THE PPST', post)
-
   const postId = post.postId
   const userId = post.userId;
   const platform = post.platform;
@@ -237,9 +235,9 @@ export async function getServerSideProps(context) {
     let UserModel = await connectUserDB;
 
     // get the user token, and the refresh token
-    let user = UserModel.findOne({ userId });
+    let user = await UserModel.findOne({ _id: userId });
 
-    const platformData = user.socialMediaLinks.find(link => link.platform === platform);
+    const platformData = user.socialMediaLinks.find(link => link.platformName === platform);
 
     // check the accessToken expiration
     const now = new Date();
@@ -255,7 +253,6 @@ export async function getServerSideProps(context) {
       await UserModel.save();
     }
 
-    console.log('The user', user)
     const postInReview = await UserModel.aggregate([
       // Match the specific user by ID and the specific platform
       { 
@@ -300,12 +297,19 @@ export async function getServerSideProps(context) {
     // get all the boards and insert them into the postInReview
     const res = await fetchBoards(platformData.accessToken);
     
-    console.log('This is the data', res)
+    // now get the borads: id, name, description
+    const pinBoards = res.items.map(board => {
+      return {
+        id: board.id,
+        name: board.name,
+        desc: board.description
+      }
+    })
+
+    console.log('THE BOARDS', pinBoards)
 
     // here set the data to the posts before your return it
     post = JSON.parse(JSON.stringify(postInReview[0]));
-
-    console.log('THE POST', post)
   
   } catch (error) {
     console.error('Server error', error.message);
