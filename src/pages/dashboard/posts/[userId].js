@@ -41,7 +41,7 @@ const Post = ({ post }) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ userId, postId, platform, isReject, comment })
+        body: JSON.stringify({ userId, postId, platform, isReject, comment, selectedBoard })
       });
     
       if (!response.ok) {
@@ -102,7 +102,7 @@ const Post = ({ post }) => {
           </div>
           {isReject && (
             <div className="comment-section">
-              <label>Boards</label>
+              <label>Comment</label>
               <textarea
                 value={comment}
                 onChange={handleCommentChange}
@@ -121,8 +121,8 @@ const Post = ({ post }) => {
                     onClick={() => setSelectedBoard(board.id)}
                     data-board-id={board.id}
                   >
-                    <p>Name: {board.name}</p>
-                    <p>Description: {board.desc}</p>
+                    <p><b>Name:</b> {board.name}</p>
+                    <p><b>Description:</b> {board.desc}</p>
                   </div>
                 ))}
               </div>
@@ -249,6 +249,7 @@ export async function getServerSideProps(context) {
 
   const userId = userInfo[0];
   const platform = userInfo[1];
+  const hostId = userInfo[2];
 
   let post;
 
@@ -258,7 +259,7 @@ export async function getServerSideProps(context) {
     let UserModel = await connectUserDB;
 
     // get the user token, and the refresh token
-    let user = await UserModel.findOne({ _id: userId });
+    let user = await UserModel.findOne({ _id: hostId });
 
     const platformData = user.socialMediaLinks.find(link => link.platformName === platform);
 
@@ -328,8 +329,6 @@ export async function getServerSideProps(context) {
         desc: board.description
       }
     })
-
-    console.log('THE BOARDS', pinBoards)
 
     // here set the data to the posts before your return it
     post = JSON.parse(JSON.stringify(postInReview[0]));

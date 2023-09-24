@@ -706,7 +706,8 @@ body {
 }
 
 .decision-container .label,
-.board-section label {
+.board-section label,
+.comment-section label {
     font-size: 1.3em;
     font-weight: bold;
 }
@@ -769,11 +770,16 @@ body {
     cursor: auto !important;
 }
 
+.board-section {
+    margin-top: 10px;
+}
+
 .board-section .board {
     margin: 5px;
     padding: 5px;
     border-radius: 5px;
     cursor: pointer;
+    transition: all .07s;
 }
 
 .board-section .board p {
@@ -782,9 +788,11 @@ body {
 }
 
 .board-section .board:hover {
-    outline: 2px solid #1465e7;   
+    outline: 2.5px solid #1465e7; 
+    background-color: #d2e3ff;  
 }
 
 .selectedBoard {
-    outline: 2px solid #1465e7;
+    outline: 2.5px solid #1465e7;
+    background-color: #d2e3ff;  
 }

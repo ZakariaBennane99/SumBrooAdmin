@@ -36,7 +36,7 @@ const Posts = ({ posts }) => {
           {
             posts && posts.map((post, i) => {
               return (<div key={i} className="post-container" 
-              onClick={() => router.push(`/dashboard/posts/${post.userId}-${post.platform}`)}>
+              onClick={() => router.push(`/dashboard/posts/${post.userId}-${post.platform}-${post.hostId}`)}>
                   <p>{_.startCase(post.pinTitle)}</p>
                   <div>
                     <img width={25} src={`/sm/${post.platform}.svg`} />
@@ -106,6 +106,7 @@ export async function getServerSideProps(context) {
           pinTitle: "$socialMediaLinks.posts.content.textualData.pinterest.title",
           publishingDate: "$socialMediaLinks.posts.publishingDate",
           platform: "$socialMediaLinks.posts.platform",
+          hostId: "$socialMediaLinks.posts.hostUserId"
         },
       },
     ]);
