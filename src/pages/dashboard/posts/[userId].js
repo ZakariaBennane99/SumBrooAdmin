@@ -9,15 +9,14 @@ const Post = ({ post }) => {
   const postId = post.postId
   const userId = post.userId;
   const platform = post.platform;
+  const pinBoards = post.pinBoards;
 
   const [submitClicked, setSubmitClicked] = useState(false);
 
   const [isReject, setIsReject] = useState(false);
+  const [isAccept, setIsAccept] = useState(false);
+  const [selectedBoard, setSelectedBoard] = useState(null);
   const [comment, setComment] = useState("");
-
-  const handleRejectChange = (event) => {
-    setIsReject(event.target.checked);
-  };
 
   const handleCommentChange = (event) => {
     setComment(event.target.value);
@@ -81,7 +80,10 @@ const Post = ({ post }) => {
                   type="radio"
                   name="acceptReject"
                   checked={!isReject}
-                  onChange={() => setIsReject(false)}
+                  onChange={() => {
+                    setIsReject(false);
+                    setIsAccept(true);
+                  }}
                 />
               </label>
               <label>
@@ -90,14 +92,17 @@ const Post = ({ post }) => {
                   type="radio"
                   name="acceptReject"
                   checked={isReject}
-                  onChange={() => setIsReject(true)}
+                  onChange={() => {
+                    setIsReject(true);
+                    setIsAccept(false);
+                  }}
                 />
               </label>
             </div>
           </div>
           {isReject && (
             <div className="comment-section">
-              <label>Comment</label>
+              <label>Boards</label>
               <textarea
                 value={comment}
                 onChange={handleCommentChange}
@@ -105,6 +110,24 @@ const Post = ({ post }) => {
               />
             </div>
           )}
+          {
+            isAccept && (
+              <div className="board-section">
+                <label>Boards</label>
+                {pinBoards.map((board) => (
+                  <div
+                    key={board.id}
+                    className={`board ${selectedBoard === board.id ? 'selectedBoard' : ''}`}
+                    onClick={() => setSelectedBoard(board.id)}
+                    data-board-id={board.id}
+                  >
+                    <p>Name: {board.name}</p>
+                    <p>Description: {board.desc}</p>
+                  </div>
+                ))}
+              </div>
+            )
+          }
           <button className={`${submitClicked ? 'publish-btn-loading' : ''}`}
                onClick={handleSubmit} disabled={submitClicked}>
                 {
@@ -296,7 +319,7 @@ export async function getServerSideProps(context) {
     // here connect to the user SM using the token, then
     // get all the boards and insert them into the postInReview
     const res = await fetchBoards(platformData.accessToken);
-    
+
     // now get the borads: id, name, description
     const pinBoards = res.items.map(board => {
       return {
@@ -310,6 +333,7 @@ export async function getServerSideProps(context) {
 
     // here set the data to the posts before your return it
     post = JSON.parse(JSON.stringify(postInReview[0]));
+    post.pinBoards = pinBoards;
   
   } catch (error) {
     console.error('Server error', error.message);

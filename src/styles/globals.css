@@ -705,7 +705,8 @@ body {
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
 
-.decision-container .label {
+.decision-container .label,
+.board-section label {
     font-size: 1.3em;
     font-weight: bold;
 }
@@ -766,4 +767,24 @@ body {
 .publish-btn-loading {
     background: #73739a !important;
     cursor: auto !important;
+}
+
+.board-section .board {
+    margin: 5px;
+    padding: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.board-section .board p {
+    margin: 0px;
+    margin-bottom: 5px;
+}
+
+.board-section .board:hover {
+    outline: 2px solid #1465e7;   
+}
+
+.selectedBoard {
+    outline: 2px solid #1465e7;
 }
