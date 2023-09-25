@@ -25,12 +25,33 @@ export default async function handler(req, res) {
       return res.status(400).json({ errors: result.array() });
     }
 
+    async function createPin(data, token) {
+      try {
+        const response = await fetch('https://api.pinterest.com/v5/pins', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+    
+        const result = await response.json();
+        console.log(result);
+        return result
+
+      } catch (error) {
+        console.error('Error:', error);
+        return null
+      }
+    }
+
     // connectUserDB
     await connectUserDB();
   
     try {
 
-      const { userId, postId, platform, comment, isReject } = req.body;
+      const { userId, postId, platform, comment, isReject, selectedBoard } = req.body;
 
       const user = await User.findOne({ _id: userId })
 
@@ -143,33 +164,54 @@ export default async function handler(req, res) {
         });   
 
       } else {
+        
+        // publish the post to Pinterest
+        // check the media type first
+        const user = await User.findOne(
+          { 
+            _id: new mongoose.Types.ObjectId(userId), 
+            "socialMediaLinks.posts._id": new mongoose.Types.ObjectId(postId) 
+          },
+          { "socialMediaLinks.posts.$": 1 } // projection to get only the matched post
+        );
+        
+        const post = user?.socialMediaLinks.posts[0];
 
-        // get the board belonging to the host user
+        if (post && post.content.media.mediaType === 'image') {
 
+          // structure the data
+          const data = {
+            title: "My Pin",
+            description: "Pin Description",
+            board_id: boardId,
+            media_source: {
+              source_type: "image_url",
+              url: "https://i.pinimg.com/564x/28/75/e9/2875e94f8055227e72d514b837adb271.jpg"
+            }
+          };
 
-        // then you have to call the corresponding function
-        // the boards should already be in the admin page, then 
-        // he/she can choose the right board based off the content
-        if () {
-           
-        } else {
+          // call a function to post to Pinterest Image
+          const isUploaded = await createPin()
 
         }
 
+        if (post && post.content.media.mediaType === 'video') {
+          // call the function to post to Pinterest Video
+        }
 
 
-
-        // update the postStatus and remove the content
-        // don't forget to remove the comment
+        // update the postStatus to published 
+        // remove the content
         await User.updateOne(
           { "socialMediaLinks.posts._id": new mongoose.Types.ObjectId(postId) },
           { 
             $set: { "socialMediaLinks.$.posts.$[elem].postStatus": "published" },
-            $set: { "socialMediaLinks.$.posts.$[elem].comment": comment },
             $unset: { "socialMediaLinks.$.posts.$[elem].content": "" }
           },
           { arrayFilters: [{ "elem._id": new mongoose.Types.ObjectId(postId) }] }
         );
+
+
 
         // delete the media from AWS S3
         const FILE_KEY = 'pinterest-' + user
