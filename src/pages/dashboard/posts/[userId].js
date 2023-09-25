@@ -195,7 +195,6 @@ export async function getServerSideProps(context) {
     }
   }
 
-
   async function fetchBoards(token) {
 
     const url = 'https://api.pinterest.com/v5/boards';
