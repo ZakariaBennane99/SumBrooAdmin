@@ -88,6 +88,59 @@ export default async function handler(req, res) {
       }
     }
 
+    async function checkVideoUpload(mediaId) {
+      const url = `https://api.pinterest.com/v5/media/${mediaId}`;
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log(result);
+          return result
+        } else {
+          console.error('Error:', response.status, response.statusText);
+          return null
+        }
+      } catch (error) {
+        console.error('Network Error:', error);
+        return null
+      }
+    }
+
+    async function uploadEntireVidToPin() {
+
+    }
+    
+    async function createPinVideo(userId, platform) {
+
+      // first register your intent
+      const intent = await postVideoIntent();
+
+      if (!intent) {
+        return null
+      }
+
+      // now get the S3 URL, and hit upload
+      const videoURL = `https://sumbroo-media-upload.s3.us-east-1.amazonaws.com/${platform}-${userId}`;
+      const uploadInfo = await uploadVideoFile(videoURL);
+
+      if (!uploadInfo) {
+        return null
+      }
+
+      // check if the video has been uploaded
+      const uploaded = await checkVideoUpload(uploadInfo.media_id);
+
+      if (!uploaded) {
+        return null
+      }
+
+      // now call the 
+
+    }
+
     // in case the accessToken has expired
     async function refreshTokenForUser(refToken) {
 
@@ -147,31 +200,7 @@ export default async function handler(req, res) {
       }
 
     }
-    
-    async function createPinVideo(userId, platform, ) {
-      // first register your intent
-      const intent = await postVideoIntent();
-
-      // check if the intent is there
-      if (!intent) {
-        return null
-      }
-
-      // now get the S3 URL, and hit upload
-      const videoURL = `https://sumbroo-media-upload.s3.us-east-1.amazonaws.com/${platform}-${userId}`;
-      const uploaded = await uploadVideoFile(videoURL);
-
-      if (!uploaded) {
-        return null
-      }
-
-      // check if the video has been uploaded
-
-
-
-
-
-    }
+  
 
     // connectUserDB
     await connectUserDB();

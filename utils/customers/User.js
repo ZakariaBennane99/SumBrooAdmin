@@ -9,6 +9,9 @@ const MediaContentSchema = new Schema({
     awsLink: {
         type: String,
         required: true
+    },
+    videoCover: {
+        type: String
     }
 });
 
