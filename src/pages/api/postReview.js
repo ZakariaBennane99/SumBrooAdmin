@@ -347,7 +347,9 @@ export default async function handler(req, res) {
           return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
         }
 
-        const emailSent = await sendNotificationEmail(user, platform, template);
+        const emailSent = await sendNotificationEmail(user, platform, 'Post_Rejection_Template');
+
+        console.log('IS EMAIL SENT FROM REJECTION', emailSent)
  
 
       } else {
@@ -452,6 +454,12 @@ export default async function handler(req, res) {
             $unset: { "socialMediaLinks.$.posts.$[elem].content": "" }
           }
         );
+
+        // send the email
+        const emailSent = await sendNotificationEmail(user, platform, 'Post_Approval_Template');
+
+        console.log('IS EMAIL SENT FROM ACCEPTANCE', emailSent)
+
 
         // Initialize the S3 Client
         const s3Client = new S3Client({
