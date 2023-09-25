@@ -1,7 +1,7 @@
 import connectUserDB from '../../../utils/connectUserDB';
 import User from '../../../utils/customers/User';
 import { check, validationResult } from 'express-validator';
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, DeleteObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { SESClient, SendTemplatedEmailCommand } from "@aws-sdk/client-ses";
 import mongoose from 'mongoose';
 
@@ -24,6 +24,64 @@ export default async function handler(req, res) {
     if (!result.isEmpty()) {
       return res.status(400).json({ errors: result.array() });
     }
+
+    // send email
+    async function sendNotificationEmail(user, platform, template) {
+      // now send an email informing them about the decision
+      async function sendEmail(user, platform, template) {
+        const PLATFOTM = platform.charAt(0).toUpperCase() + platform.slice(1);
+        const params = {
+            Destination: {
+              ToAddresses: [user.email]
+            },
+            Template: template,
+            TemplateData: JSON.stringify({
+              subject: 'Your ' + PLATFOTM + ' Post',
+              platform: PLATFOTM,
+              name: capitalize(user.name)
+            }),
+            Source: 'no-reply@sumbroo.com'
+        };
+    
+        const command = new SendTemplatedEmailCommand(params);
+        
+        const sesClient = new SESClient({
+          region: process.env.AWS_REGION,
+          credentials: {
+              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+          }
+        });
+    
+        try {
+            const data = await sesClient.send(command);
+            return {
+                status: 'ok',
+                response: { success: true, messageId: data.MessageId }
+            };
+        } catch (err) {
+            console.error(err);
+            return {
+                status: 'notOk',
+                response: { error: 'Failed to send the email.' }
+            };
+        }
+      }  
+
+      // Send the email
+      sendEmail(user, platform, template).then(result => {
+          if (result.status === 'ok') {
+              console.log("Email sent successfully:", result.response);
+              return true
+          } else {
+              console.error("Error sending email:", result.response);
+              return false
+          }
+      });
+
+    }
+
+    
 
     async function uploadVideoFile(vidUrl) {
     
@@ -109,11 +167,28 @@ export default async function handler(req, res) {
       }
     }
 
-    async function uploadEntireVidToPin() {
+    async function uploadEntireVidContentToPin(token, data) {
+      try {
+        const response = await fetch('https://api.pinterest.com/v5/pins', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+    
+        const result = await response.json();
+        console.log(result);
+        return result
 
+      } catch (error) {
+        console.error('Error:', error);
+        return null
+      }
     }
     
-    async function createPinVideo(userId, platform) {
+    async function createPinVideo(userId, platform, data, token) {
 
       // first register your intent
       const intent = await postVideoIntent();
@@ -137,7 +212,17 @@ export default async function handler(req, res) {
         return null
       }
 
-      // now call the 
+      // update the data with the new media_id
+      data.media_source.media_id = uploadInfo.media_id;
+
+      const uploadedEntireVideo = await uploadEntireVidContentToPin(token, data);
+
+      if (!uploadedEntireVideo) {
+        return null
+      }
+
+      // video Pin has been uploaded!
+      return true
 
     }
 
@@ -201,7 +286,6 @@ export default async function handler(req, res) {
 
     }
   
-
     // connectUserDB
     await connectUserDB();
   
@@ -263,61 +347,8 @@ export default async function handler(req, res) {
           return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
         }
 
-        // now send an email informing them about the decision
-
-        async function sendEmail(user, platform) {
-          
-          const PLATFOTM = platform.charAt(0).toUpperCase() + platform.slice(1);
-
-          const params = {
-              Destination: {
-                ToAddresses: [user.email]
-              },
-              Template: 'Post_Rejection_Template',
-              TemplateData: JSON.stringify({
-                subject: 'Your ' + PLATFOTM + ' Post',
-                platform: PLATFOTM,
-                name: capitalize(user.name)
-              }),
-              Source: 'no-reply@sumbroo.com'
-          };
-      
-          const command = new SendTemplatedEmailCommand(params);
-
-          
-          const sesClient = new SESClient({
-            region: process.env.AWS_REGION,
-            credentials: {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-            }
-          });
-      
-          try {
-              const data = await sesClient.send(command);
-              return {
-                  status: 200,
-                  response: { success: true, messageId: data.MessageId }
-              };
-          } catch (err) {
-              console.error(err);
-              return {
-                  status: 500,
-                  response: { error: 'Failed to send the email.' }
-              };
-          }
-        }
-
-        // Send the email
-        sendEmail(userInfo, platform).then(result => {
-            if (result.status === 200) {
-                console.log("Email sent successfully:", result.response);
-                return res.status(200).json({ ok: 'success' });
-            } else {
-                console.error("Error sending email:", result.response);
-                return res.status(500).json({ error: err });
-            }
-        });   
+        const emailSent = await sendNotificationEmail(user, platform, template);
+ 
 
       } else {
         
@@ -362,7 +393,7 @@ export default async function handler(req, res) {
 
         if (userPost && userPost.content.media.mediaType === 'image') {
 
-          // structure the data
+          // structure the image upload data
           const data = {
             title: userPost.content.textualData.pinterest.title,
             description: userPost.content.textualData.pinterest.description,
@@ -378,18 +409,33 @@ export default async function handler(req, res) {
           const pinUploaded = await createPin(data, accessToken)
 
           // here check if uploaded, delete from AWS S3, otherwise return an error
-          if (pinUploaded) {
-            return res.status(200).json({ post: 'Yeah' });
-          } else {
+          if (!pinUploaded) {
             return res.status(400).json({ error: pinUploaded });
-          }
+          } 
 
         }
 
         if (userPost && userPost.content.media.mediaType === 'video') {
-          // call the function to post to Pinterest Video
-          const pinResults = await createPinVideo();
 
+          // structure the image upload data
+          const data = {
+            title: userPost.content.textualData.pinterest.title,
+            description: userPost.content.textualData.pinterest.description,
+            link: userPost.content.textualData.pinterest.destinationLink,
+            board_id: selectedBoard,
+            media_source: {
+              source_type: "video_id",
+              cover_image_url: `https://sumbroo-media-upload.s3.us-east-1.amazonaws.com/${platform}-${userId}-videoCover`,
+              media_id: ""
+            }
+          };
+
+          // call the function to post to Pinterest Video
+          const pinResults = await createPinVideo(userId, platform, data, accessToken);
+
+          if (!pinResults) {
+            return res.status(400).json({ error: pinUploaded });
+          }
 
         }
 
@@ -397,18 +443,16 @@ export default async function handler(req, res) {
         // update the postStatus to published 
         // remove the content
         await User.updateOne(
-          { "socialMediaLinks.posts._id": new mongoose.Types.ObjectId(postId) },
+          { 
+            _id: new mongoose.Types.ObjectId(userId), 
+            "socialMediaLinks.posts._id": new mongoose.Types.ObjectId(postId)
+          },
           { 
             $set: { "socialMediaLinks.$.posts.$[elem].postStatus": "published" },
             $unset: { "socialMediaLinks.$.posts.$[elem].content": "" }
-          },
-          { arrayFilters: [{ "elem._id": new mongoose.Types.ObjectId(postId) }] }
+          }
         );
 
-
-
-        // delete the media from AWS S3
-        const FILE_KEY = 'pinterest-' + user
         // Initialize the S3 Client
         const s3Client = new S3Client({
           region: process.env.AWS_REGION,
@@ -419,10 +463,27 @@ export default async function handler(req, res) {
         });
 
         // Create a new instance of the DeleteObjectCommand
-        const command = new DeleteObjectCommand({
-          Bucket: 'sumbroo-media-upload',
-          Key: FILE_KEY,
-        });
+        let command;
+
+        if (userPost.content.media.mediaType === 'video') {
+          const VIDEO_KEY = 'pinterest-' + user;
+          const VIDEO_COVER_KEY = 'pinterest-' + user + '-videoCover';
+          command = new DeleteObjectsCommand({
+            Bucket: 'sumbroo-media-upload',
+            Delete: {
+              Objects: [
+                { Key: VIDEO_KEY },
+                { Key: VIDEO_COVER_KEY },
+              ],
+            },
+          });
+        } else {
+          const IMAGE_KEY = 'pinterest-' + user;
+          command = new DeleteObjectCommand({
+            Bucket: 'sumbroo-media-upload',
+            Key: IMAGE_KEY,
+          });
+        }
 
         try {
           // Try to send the command to delete the object
@@ -433,6 +494,7 @@ export default async function handler(req, res) {
           console.error("Error deleting file:", error);
           return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
         }
+   
         
 
       }
