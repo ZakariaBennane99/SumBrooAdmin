@@ -1,9 +1,9 @@
-import connectUserDB from '../../../utils/connectUserDB';
-import User from '../../../utils/customers/User';
+import { connectUserDB } from '../../../utils/connectUserDB';
 import { check, validationResult } from 'express-validator';
 import { S3Client, DeleteObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { SESClient, SendTemplatedEmailCommand } from "@aws-sdk/client-ses";
 import mongoose from 'mongoose';
+import _ from 'lodash';
 
 
 
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
             TemplateData: JSON.stringify({
               subject: 'Your ' + PLATFOTM + ' Post',
               platform: PLATFOTM,
-              name: capitalize(user.name)
+              name: _.startCase(user.name)
             }),
             Source: 'no-reply@sumbroo.com'
         };
@@ -80,7 +80,6 @@ export default async function handler(req, res) {
       });
 
     }
-
     
 
     async function uploadVideoFile(vidUrl) {
@@ -287,13 +286,13 @@ export default async function handler(req, res) {
     }
   
     // connectUserDB
-    await connectUserDB();
+    let UserModel = await connectUserDB;
   
     try {
 
       const { userId, postId, platform, comment, isReject, selectedBoard } = req.body;
 
-      const user = await User.findOne({ _id: userId })
+      const user = await UserModel.findOne({ _id: userId })
 
       const userInfo = {
         userName: user.name,
@@ -309,15 +308,23 @@ export default async function handler(req, res) {
         // and update the post to reject, and add the comment
 
         // Update post status updated and remove content
-        await User.updateOne(
-          { "socialMediaLinks.posts._id": new mongoose.Types.ObjectId(postId) },
+        await UserModel.updateOne(
           { 
-            $set: { "socialMediaLinks.$.posts.$[elem].postStatus": "rejected" },
-            $set: { "socialMediaLinks.$.posts.$[elem].comment": comment },
+            _id: new mongoose.Types.ObjectId(userId), 
+            "socialMediaLinks.posts._id": new mongoose.Types.ObjectId(postId)
+          },
+          { 
+            $set: { 
+              "socialMediaLinks.$.posts.$[elem].postStatus": "rejected",
+              "socialMediaLinks.$.posts.$[elem].comment": comment 
+            },
             $unset: { "socialMediaLinks.$.posts.$[elem].content": "" }
           },
-          { arrayFilters: [{ "elem._id": new mongoose.Types.ObjectId(postId) }] }
+          { 
+            arrayFilters: [{ "elem._id": new mongoose.Types.ObjectId(postId) }]
+          }
         );
+        
 
         // delete the media from AWS S3
         const FILE_KEY = 'pinterest-' + userId;
@@ -347,7 +354,7 @@ export default async function handler(req, res) {
           return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
         }
 
-        const emailSent = await sendNotificationEmail(user, platform, 'Post_Rejection_Template');
+        const emailSent = await sendNotificationEmail(userInfo, platform, 'Post_Rejection_Template');
 
         console.log('IS EMAIL SENT FROM REJECTION', emailSent)
  
@@ -356,7 +363,7 @@ export default async function handler(req, res) {
         
         // publish the post to Pinterest
         // check the media type first
-        const user = await User.findOne(
+        const user = await UserModel.findOne(
           { 
             _id: new mongoose.Types.ObjectId(userId), 
             "socialMediaLinks.posts._id": new mongoose.Types.ObjectId(postId) 
@@ -442,9 +449,13 @@ export default async function handler(req, res) {
         }
 
 
+        // send the email
+        const emailSent = await sendNotificationEmail(userInfo, platform, 'Post_Approval_Template');
+
+
         // update the postStatus to published 
         // remove the content
-        await User.updateOne(
+        await UserModel.updateOne(
           { 
             _id: new mongoose.Types.ObjectId(userId), 
             "socialMediaLinks.posts._id": new mongoose.Types.ObjectId(postId)
@@ -452,58 +463,11 @@ export default async function handler(req, res) {
           { 
             $set: { "socialMediaLinks.$.posts.$[elem].postStatus": "published" },
             $unset: { "socialMediaLinks.$.posts.$[elem].content": "" }
+          },
+          { 
+            arrayFilters: [{ "elem._id": new mongoose.Types.ObjectId(postId) }]
           }
         );
-
-        // send the email
-        const emailSent = await sendNotificationEmail(user, platform, 'Post_Approval_Template');
-
-        console.log('IS EMAIL SENT FROM ACCEPTANCE', emailSent)
-
-
-        // Initialize the S3 Client
-        const s3Client = new S3Client({
-          region: process.env.AWS_REGION,
-          credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-          },
-        });
-
-        // Create a new instance of the DeleteObjectCommand
-        let command;
-
-        if (userPost.content.media.mediaType === 'video') {
-          const VIDEO_KEY = 'pinterest-' + user;
-          const VIDEO_COVER_KEY = 'pinterest-' + user + '-videoCover';
-          command = new DeleteObjectsCommand({
-            Bucket: 'sumbroo-media-upload',
-            Delete: {
-              Objects: [
-                { Key: VIDEO_KEY },
-                { Key: VIDEO_COVER_KEY },
-              ],
-            },
-          });
-        } else {
-          const IMAGE_KEY = 'pinterest-' + user;
-          command = new DeleteObjectCommand({
-            Bucket: 'sumbroo-media-upload',
-            Key: IMAGE_KEY,
-          });
-        }
-
-        try {
-          // Try to send the command to delete the object
-          await s3Client.send(command);
-          console.log(`File with KEY: ${FILE_KEY} deleted successfully`);
-        } catch (error) {
-          // Catch any error that occurs
-          console.error("Error deleting file:", error);
-          return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
-        }
-   
-        
 
       }
       

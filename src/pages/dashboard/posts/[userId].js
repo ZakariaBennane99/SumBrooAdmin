@@ -218,7 +218,6 @@ export async function getServerSideProps(context) {
       console.error('Fetching boards failed:', error);
     }
   }
-  
 
   const cookies = context.req.headers.cookie;
   

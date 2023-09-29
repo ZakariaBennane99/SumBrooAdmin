@@ -52,8 +52,7 @@ const PostSchema = new Schema({
         required: true
     },
     hostUserId: {
-        type: String,
-        required: true
+        type: String
     },
     platform: String,
     postLink: String, // for published posts
