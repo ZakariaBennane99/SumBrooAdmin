@@ -1,8 +1,19 @@
 import Header from "../../../../components/Header";
 import localForage from 'localforage';
-import _ from 'lodash';
 import { useEffect, useState } from "react";
 
+
+// Utils functions
+
+function decodeHtmlEntities(input) {
+  // Using a regex to match numeric (&#1234;) and 
+  // hexadecimal (&#x1a3f;) HTML entities
+  return input.replace(/&#(x?)(\d+|\w+);?/gi, (match, isHex, numStr) => {
+      const num = isHex ? parseInt(numStr, 16) : parseInt(numStr, 10);
+      const char = String.fromCharCode(num);
+      return char;
+  });
+}
 
 function getHoursLeft(dateString) {
 
@@ -71,6 +82,8 @@ const Application = ({ userId }) => {
             console.error('Server error', error.message);
           }
     }
+
+    console.log(_.unescape("https:&#x2F;&#x2F;www.pinterest.com&#x2F;AHLFM&#x2F;"));
 
     return (<div className="dashboard-container">
         <Header />
