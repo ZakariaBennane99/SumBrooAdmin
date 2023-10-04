@@ -54,9 +54,6 @@ const Application = ({ userId }) => {
 
     async function handleSendClick() {
 
-      console.log('UserID', userId)
-      console.log('Decision', selected)
-
       try {
           const response = await fetch('http://localhost:3000/api/handleApplications', {
             method: 'POST', 
