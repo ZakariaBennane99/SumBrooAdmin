@@ -23,9 +23,11 @@ const Applications = ({ data }) => {
 
   const router = useRouter();
 
+  console.log('The users', data)
+
   useEffect(() => {
       if (data && data.length > 0) {
-          localForage.setItem('applications', data.users).then(() => {
+          localForage.setItem('applications', data).then(() => {
               console.log('Data has been stored in IndexedDB.');
           }).catch(error => {
               console.error('Error saving data to IndexedDB:', error);
@@ -102,13 +104,13 @@ export async function getServerSideProps(context) {
     let UserModel = await connectUserDB;
 
     const users = await UserModel.find(
-      { accountStatus: 'new' }, 
+      { accountStatus: 'inReview' }, 
       'name applicationDate socialMediaLinks.platformName socialMediaLinks.profileLink' 
       // This second parameter is a space-separated list that defines which fields to select
       // don't forget to add applicationDate just after the name
     );
   
-    data = users;
+    data = JSON.parse(JSON.stringify(users));
   
   } catch (error) {
     console.error('The error', error);
