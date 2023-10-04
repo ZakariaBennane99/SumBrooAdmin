@@ -1,6 +1,7 @@
 import Header from "../../../../components/Header";
 import localForage from 'localforage';
 import { useEffect, useState } from "react";
+import he from 'he';
 
 
 // Utils functions
@@ -73,7 +74,6 @@ const Application = ({ userId }) => {
           }
     }
 
-    console.log(decodeHtmlEntities("https:&#x2F;&#x2F;www.pinterest.com&#x2F;AHLFM&#x2F;"));
 
     return (<div className="dashboard-container">
         <Header />
@@ -90,7 +90,7 @@ const Application = ({ userId }) => {
 
                                             <div className="link-container">
                                                 <span>{sm.platformName.charAt(0).toUpperCase() + sm.platformName.slice(1)} Profile Link</span>
-                                                <p data-url={decodeHtmlEntities(sm.profileLink)} onClick={handleExternalClick}>{decodeHtmlEntities(sm.profileLink)}</p>
+                                                <p data-url={he.decode(sm.profileLink)} onClick={handleExternalClick}>{he.decode(sm.profileLink)}</p>
                                             </div>
 
                                             <div className="decision-container">
