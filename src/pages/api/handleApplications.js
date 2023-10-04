@@ -1,5 +1,4 @@
-import connectUserDB from '../../../utils/connectUserDB';
-import User from '../../../utils/customers/User';
+import { connectUserDB } from '../../../utils/connectUserDB';
 import { verifyToken } from '../../../utils/verifyToken';  
 import { parseCookies } from '../../../utils/parseCookies';
 import { SESClient, SendTemplatedEmailCommand } from "@aws-sdk/client-ses";
@@ -57,18 +56,23 @@ export default async function handler(req, res) {
     }
 
 
-    // check the data
-    await check('userId').isString().run(req);
-    await check('decision').isIn(['accepted', 'rejected']).run(req);
-  
-    // Find validation errors
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      return res.status(400).json({ errors: result.array() });
-    }
+    // Validate userId
+    await check('userId').isString().isLength({ min: 24, max: 24 }).withMessage('User ID must be a 24-character string').run(req);
+    // Validate decision as an array
+    await check('decision').isArray().withMessage('Decision must be an array').run(req);
+    // Validate properties of objects in decision array
+    await check('decision.*.platform').isIn(['pinterest', 'otherPlatform1', 'otherPlatform2'])
+        .withMessage('Platform is not valid').run(req);
+    await check('decision.*.status').isIn(['accept', 'decline', 'pending'])
+        .withMessage('Status is not valid').run(req);
+    await check('decision.*.nicheTags').isString().withMessage('NicheTags must be a string').run(req);
+    await check('decision.*.niche').isString().withMessage('Niche must be a string').run(req);
 
-    // connectUserDB
-    await connectUserDB();
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log('Shit again')
+        return res.status(400).json({ errors: errors.array() });
+    }
 
 
     // set up AWS SES
@@ -84,24 +88,35 @@ export default async function handler(req, res) {
     try {
     
         const { userId, decision } = req.body
-    
-        const user = await User.findOne({ _id: userId })
-    
+
+        console.log('The userID', userId)
+        console.log('The decision', decision)
+
+        let UserModel = await connectUserDB;
+        const user = await UserModel.findOne({ _id: userId })
+
+        console.log('The thing', decision.every(el => el.status === 'accept'))
+
         if (decision.every(el => el.status === 'accept')) {
             // update accountStatus to active
             user.accountStatus = 'pending';
             // update all profileStatus's to active
             // add niches and tags to the profile
-            user.socialMediaLinks.forEach(sm => {
-                sm.profileStatus = 'pending';
-                decision.forEach(el => {
-                    if (sm.platformName === el.platform) {
-                        sm.niche = el.niche;
-                        sm.audience = el.nicheTags.split(',').map(word => word.trim());
-                    }
-                })
-            });
-            await user.save();
+
+            try {
+                user.socialMediaLinks.forEach(sm => {
+                    sm.profileStatus = 'pendingPay';
+                    decision.forEach(el => {
+                        if (sm.platformName === el.platform) {
+                            sm.niche = el.niche;
+                            sm.audience = el.nicheTags.split(',').map(word => word.trim());
+                        }
+                    })
+                });
+                await user.save();
+            } catch (er) {
+                console.log('The error', er)
+            }
     
             // prepare an onboarding temporary link
             const onboardingLink = `http://localhost:3000/onboarding/${generateOnboardingToken(userId)}`;
@@ -274,7 +289,7 @@ export default async function handler(req, res) {
         }
 
     } catch (err) {
-        return res.status(400).json({ error: 'Server error' });
+        return res.status(500).json({ error: err });
     }
 
 }

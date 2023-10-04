@@ -53,25 +53,30 @@ const Application = ({ userId }) => {
     };
 
     async function handleSendClick() {
-        try {
-            const response = await fetch('http://localhost:3000/api/handleApplications', {
-              method: 'POST', 
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ userId: userId, decision: selected })
-            });
-        
-            if (!response.ok) {
-              throw new Error('Server error');
-            }
-        
-            const data = await response.json();
-            console.log(data)
-            router.push('/dashboard/applications')
-          } catch (error) {
-            console.error('Server error', error.message);
+
+      console.log('UserID', userId)
+      console.log('Decision', selected)
+
+      try {
+          const response = await fetch('http://localhost:3000/api/handleApplications', {
+            method: 'POST', 
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId: userId, decision: selected })
+          });
+      
+          if (!response.ok) {
+            throw new Error('Server error');
           }
+      
+          const data = await response.json();
+          console.log(data)
+          router.push('/dashboard')
+      } catch (error) {
+        console.error('Server error', error.message);
+      }
+
     }
 
 

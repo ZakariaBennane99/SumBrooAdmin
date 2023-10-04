@@ -32,4 +32,3 @@ const connectUserDB = new Promise((resolve, reject) => {
 });
 
 export { connectUserDB };
-
