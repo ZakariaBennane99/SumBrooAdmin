@@ -6,6 +6,8 @@ import { useState } from "react";
 
 const Post = ({ post }) => {
 
+  console.log('The Post', post)
+
   const postId = post.postId
   const userId = post.userId;
   const platform = post.platform;
@@ -244,6 +246,8 @@ export async function getServerSideProps(context) {
   // now get the userId, and get the data
   const { params } = context;
   const userInfo = params.userId.split('-');
+
+  console.log('The userInfo', userInfo)
 
   const userId = userInfo[0];
   const platform = userInfo[1];
