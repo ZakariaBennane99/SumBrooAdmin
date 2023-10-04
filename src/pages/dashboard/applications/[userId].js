@@ -5,16 +5,6 @@ import { useEffect, useState } from "react";
 
 // Utils functions
 
-function decodeHtmlEntities(input) {
-  // Using a regex to match numeric (&#1234;) and 
-  // hexadecimal (&#x1a3f;) HTML entities
-  return input.replace(/&#(x?)(\d+|\w+);?/gi, (match, isHex, numStr) => {
-      const num = isHex ? parseInt(numStr, 16) : parseInt(numStr, 10);
-      const char = String.fromCharCode(num);
-      return char;
-  });
-}
-
 function getHoursLeft(dateString) {
 
   const dateObj = new Date(dateString); // Ensure it's treated as UTC
@@ -83,7 +73,7 @@ const Application = ({ userId }) => {
           }
     }
 
-    console.log(_.unescape("https:&#x2F;&#x2F;www.pinterest.com&#x2F;AHLFM&#x2F;"));
+    console.log(decodeHtmlEntities("https:&#x2F;&#x2F;www.pinterest.com&#x2F;AHLFM&#x2F;"));
 
     return (<div className="dashboard-container">
         <Header />
@@ -100,7 +90,7 @@ const Application = ({ userId }) => {
 
                                             <div className="link-container">
                                                 <span>{sm.platformName.charAt(0).toUpperCase() + sm.platformName.slice(1)} Profile Link</span>
-                                                <p data-url={_.unescape(sm.profileLink)} onClick={handleExternalClick}>{_.unescape(sm.profileLink)}</p>
+                                                <p data-url={decodeHtmlEntities(sm.profileLink)} onClick={handleExternalClick}>{decodeHtmlEntities(sm.profileLink)}</p>
                                             </div>
 
                                             <div className="decision-container">
