@@ -1,5 +1,6 @@
 import Header from "../../../../components/Header";
 import localForage from 'localforage';
+import _ from 'lodash';
 import { useEffect, useState } from "react";
 
 
@@ -37,8 +38,9 @@ const Application = ({ userId }) => {
 
     useEffect(() => {
         localForage.getItem('applications').then(data => {
-            console.log(data.filter(dt => dt._id === userId))
             setApp(data.filter(dt => dt._id === userId))
+            const a  = data.filter(dt => dt._id === userId)
+            console.log('The link', _.unescape(a[0].socialMediaLinks[0][0]))
         }).catch(error => {
             console.error('Error getting data from IndexedDB:', error);
         });
@@ -85,7 +87,7 @@ const Application = ({ userId }) => {
 
                                             <div className="link-container">
                                                 <span>{sm.platformName.charAt(0).toUpperCase() + sm.platformName.slice(1)} Profile Link</span>
-                                                <p data-url={sm.profileLink} onClick={handleExternalClick}>{sm.profileLink}</p>
+                                                <p data-url={_.unescape(sm.profileLink)} onClick={handleExternalClick}>{_.unescape(sm.profileLink)}</p>
                                             </div>
 
                                             <div className="decision-container">

@@ -303,7 +303,7 @@ body {
 }
 
 .main-application-container .link-container  p {
-    width: fit-content;
+    width: 100%;
     margin: 0px;
     word-wrap: break-word;
     margin-top: 8px;
