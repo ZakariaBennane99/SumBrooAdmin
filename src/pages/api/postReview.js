@@ -1,6 +1,6 @@
 import { connectUserDB } from '../../../utils/connectUserDB';
 import { check, validationResult } from 'express-validator';
-import { S3Client, DeleteObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { SESClient, SendTemplatedEmailCommand } from "@aws-sdk/client-ses";
 import mongoose from 'mongoose';
 import _ from 'lodash';
@@ -370,12 +370,12 @@ export default async function handler(req, res) {
           },
           { "socialMediaLinks.posts.$": 1 } // projection to get only the matched post
         );
-        
-        const userPost = user?.socialMediaLinks.posts[0];
+      
+        const userPost = user?.socialMediaLinks[0].posts[0];
 
         const hostUser = await UserModel.findOne(
           { 
-            _id: post.host.hostUserId, 
+            _id: new mongoose.Types.ObjectId(userPost.hostUserId), 
             "socialMediaLinks.platformName": 'pinterest' // WOULD BE CHANGED WHEN ADDING ANOTHER PLATFORM
           },
           { "socialMediaLinks.$": 1 } // projection to get only the matched socialMediaLink
