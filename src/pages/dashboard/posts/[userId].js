@@ -2,11 +2,10 @@ import Header from "../../../../components/Header";
 import PinterestPreview from "../../../../components/PinterestPreview";
 import { Tadpole } from "react-svg-spinners";
 import { useState } from "react";
+import he from 'he';
 
 
 const Post = ({ post }) => {
-
-  console.log('The Post', post)
 
   const postId = post.postId
   const userId = post.userId;
@@ -66,6 +65,7 @@ const Post = ({ post }) => {
         }
       };
     }
+    
   }
 
   return (
@@ -139,7 +139,7 @@ const Post = ({ post }) => {
         </div>
         <PinterestPreview
           pinTitle={post.pinTitle}
-          pinLink={post.pinLink}
+          pinLink={he.decode(post.content.textualData.pinterest.destinationLink)}
           text={post.content.textualData.pinterest.description}
           imgUrl={post.content.media.mediaType === 'image' ? post.content.media.awsLink : ''}
           videoUrl={post.content.media.mediaType === 'video' ? post.content.media.awsLink : ''}
@@ -247,8 +247,6 @@ export async function getServerSideProps(context) {
   const { params } = context;
   const userInfo = params.userId.split('-');
 
-  console.log('The userInfo', userInfo)
-
   const userId = userInfo[0];
   const platform = userInfo[1];
   const hostId = userInfo[2];
@@ -263,7 +261,7 @@ export async function getServerSideProps(context) {
     // get the user token, and the refresh token
     let user = await UserModel.findOne({ _id: hostId });
 
-    const platformData = user.socialMediaLinks.find(link => link.platformName === platform);
+    let platformData = user.socialMediaLinks.find(link => link.platformName === platform);
 
     // check the accessToken expiration
     const now = new Date();
@@ -276,7 +274,7 @@ export async function getServerSideProps(context) {
       // update the DB with the new token
       platformData.accessToken = theNewToken;
       platformData.accesstokenExpirationDate = expiryUTCDate;
-      await UserModel.save();
+      await user.save();
     }
 
     const postInReview = await UserModel.aggregate([

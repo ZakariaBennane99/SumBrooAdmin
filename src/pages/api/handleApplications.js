@@ -17,6 +17,7 @@ function generateOnboardingToken(userId) {
     const token = jwt.sign(payload, process.env.JWT_SECRET_FOR_LINK, { expiresIn: '24h' });
   
     return token;
+    
 }
 
 function capitalize(st) {
