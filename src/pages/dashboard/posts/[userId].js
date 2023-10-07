@@ -7,7 +7,7 @@ import he from 'he';
 
 const Post = ({ post }) => {
 
-  const postId = post.postId
+  const postId = post.postId;
   const userId = post.userId;
   const platform = post.platform;
   const pinBoards = post.pinBoards;
@@ -65,7 +65,7 @@ const Post = ({ post }) => {
         }
       };
     }
-    
+
   }
 
   return (
@@ -319,6 +319,8 @@ export async function getServerSideProps(context) {
 
     // here connect to the user SM using the token, then
     // get all the boards and insert them into the postInReview
+
+    
     const res = await fetchBoards(platformData.accessToken);
 
     // now get the borads: id, name, description
