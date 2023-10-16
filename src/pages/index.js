@@ -26,7 +26,7 @@ const Home = () => {
     async function handleSend() {
 
         try {
-          const response = await fetch('/nextapi/connectAdmins', {
+          const response = await fetch('/api/connectAdmins', {
             method: 'POST', 
             headers: {
               'Content-Type': 'application/json'
