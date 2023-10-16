@@ -4,6 +4,7 @@ import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { SESClient, SendTemplatedEmailCommand } from "@aws-sdk/client-ses";
 import mongoose from 'mongoose';
 import _ from 'lodash';
+import he from 'he';
 
 
 
@@ -406,7 +407,7 @@ export default async function handler(req, res) {
           const data = {
             title: userPost.content.textualData.pinterest.title,
             description: userPost.content.textualData.pinterest.description,
-            link: userPost.content.textualData.pinterest.destinationLink,
+            link: he.decode(userPost.content.textualData.pinterest.destinationLink),
             board_id: selectedBoard,
             media_source: {
               source_type: "image_url",
@@ -417,6 +418,9 @@ export default async function handler(req, res) {
           // call a function to post to Pinterest Image
           const pinUploaded = await createPin(data, accessToken)
 
+          console.log('The PinUpload Results', pinUploaded)
+
+
           // here check if uploaded, delete from AWS S3, otherwise return an error
           if (!pinUploaded) {
             return res.status(400).json({ error: pinUploaded });
@@ -424,13 +428,14 @@ export default async function handler(req, res) {
 
         }
 
+
         if (userPost && userPost.content.media.mediaType === 'video') {
 
           // structure the image upload data
           const data = {
             title: userPost.content.textualData.pinterest.title,
             description: userPost.content.textualData.pinterest.description,
-            link: userPost.content.textualData.pinterest.destinationLink,
+            link: he.decode(userPost.content.textualData.pinterest.destinationLink),
             board_id: selectedBoard,
             media_source: {
               source_type: "video_id",
