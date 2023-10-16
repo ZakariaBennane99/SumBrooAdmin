@@ -37,7 +37,7 @@ const Post = ({ post }) => {
 
     try {
 
-      const response = await fetch('http://localhost:3000/api/postReview', {
+      const response = await fetch('http://localhost:3000/nextapi/postReview', {
         method: 'POST', 
         headers: {
           'Content-Type': 'application/json'
