@@ -29,6 +29,41 @@ export default async function handler(req, res) {
     // send email
     async function sendNotificationEmail(user, platform, template) {
       // now send an email informing them about the decision
+      const messageData = {
+        from: 'SumBroo no-reply@sumbroo.com',
+        to: user.email,
+        subject: 'Your ' + PLATFOTM + ' Post',
+        template: 'rejection email',
+        't:variables': JSON.stringify({
+            rejectionComments: decision,
+            name: capitalize(user.name)
+        })
+      }
+
+      async function sendMessage() {
+        try {
+          const response = await client.messages.create('sumbroo.com', messageData);
+          console.log(response);
+          return response;
+        } catch (err) {
+          console.error("Error sending email:", );
+          return res.status(500).json({ error: "Server" });
+        }
+      }
+
+      // remove the user before sending the email
+      await user.remove();
+      
+      // Send the email
+      const re = await sendMessage();
+      if (re.status === 200) {
+        console.log("Email sent successfully:", result.response);
+        return res.status(200).json({ ok: 'success' });
+      } else {
+          console.error("Error sending email:", result.response);
+          return res.status(400).json({ error: err });
+      }
+
       async function sendEmail(user, platform, template) {
         const PLATFOTM = platform.charAt(0).toUpperCase() + platform.slice(1);
         const params = {

@@ -86,13 +86,8 @@ export default async function handler(req, res) {
     
         const { userId, decision } = req.body
 
-        console.log('The userID', userId)
-        console.log('The decision', decision)
-
         let UserModel = await connectUserDB;
         const user = await UserModel.findOne({ _id: userId })
-
-        console.log('The thing', decision.every(el => el.status === 'accept'))
 
         if (decision.every(el => el.status === 'accept')) {
             // update accountStatus to active
