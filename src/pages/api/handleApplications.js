@@ -1,9 +1,10 @@
 import { connectUserDB } from '../../../utils/connectUserDB';
 import { verifyToken } from '../../../utils/verifyToken';  
 import { parseCookies } from '../../../utils/parseCookies';
-import { SESClient, SendTemplatedEmailCommand } from "@aws-sdk/client-ses";
 import jwt from 'jsonwebtoken';
 import { check, validationResult } from 'express-validator';
+import formData from 'form-data';
+import Mailgun from 'mailgun.js';
 
 
 function generateOnboardingToken(userId) {
@@ -76,14 +77,9 @@ export default async function handler(req, res) {
     }
 
 
-    // set up AWS SES
-    const sesClient = new SESClient({
-        region: process.env.AWS_REGION,
-        credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-        }
-    });
+    // set up MailGun
+    const mailgun = new Mailgun(formData);
+    const client = mailgun.client({ username: 'api', key: process.env.MAILGUN_API_KEY });
 
 
     try {
@@ -122,98 +118,83 @@ export default async function handler(req, res) {
             // prepare an onboarding temporary link
             const onboardingLink = `http://localhost:3000/onboarding/${generateOnboardingToken(userId)}`;
 
-            async function sendEmail(user, onboardingLink) {
-                const params = {
-                    Destination: {
-                        ToAddresses: [user.email]
-                    },
-                    Template: 'Approval_Template',
-                    TemplateData: JSON.stringify({
-                        onBoarindLink: onboardingLink,
-                        name: capitalize(user.name)
-                    }),
-                    Source: 'no-reply@sumbroo.com'
-                };
-            
-                const command = new SendTemplatedEmailCommand(params);
-            
-                try {
-                    const data = await sesClient.send(command);
-                    return {
-                        status: 200,
-                        response: { success: true, messageId: data.MessageId }
-                    };
-                } catch (err) {
-                    console.error(err);
-                    return {
-                        status: 500,
-                        response: { error: 'Failed to send the email.' }
-                    };
-                }
+            const messageData = {
+                from: 'SumBroo no-reply@sumbroo.com',
+                to: user.email,
+                subject: 'Your SumBroo Application Has Been Approved!',
+                template: 'approval email',
+                't:variables': JSON.stringify({
+                    onBoarindLink: onboardingLink,
+                    name: capitalize(user.name)
+                })
             }
 
-            // Send the email
-            sendEmail(user, onboardingLink).then(result => {
-                if (result.status === 200) {
-                    console.log("Email sent successfully:", result.response);
-                    return res.status(200).json({ ok: 'success' });
-                } else {
-                    console.error("Error sending email:", result.response);
-                    return res.status(400).json({ error: err });
+            async function sendMessage() {
+                try {
+                  const response = await client.messages.create('sumbroo.com', messageData);
+                  console.log(response);
+                  return response;
+                } catch (err) {
+                  console.error("Error sending email:", );
+                  return res.status(500).json({ error: "Server" });
                 }
-            });     
+            }
+            
+              
+            // Send the email
+            const re = await sendMessage();
+            if (re.status === 200) {
+              console.log("Email sent successfully:", result.response);
+              return res.status(200).json({ ok: 'success' });
+            } else {
+                console.error("Error sending email:", result.response);
+                return res.status(400).json({ error: err });
+            }
+
     
         } else if (decision.every(el => el.status === 'reject')) {
             // now send an Approval Email
-            async function sendEmail(user, decision) {
-                const params = {
-                    Destination: {
-                        ToAddresses: [user.email]
-                    },
-                    Template: 'Rejection_Template',
-                    TemplateData: JSON.stringify({
-                        name: capitalize(user.name),
-                        rejectionComments: decision
-                    }),
-                    Source: 'no-reply@sumbroo.com'
-                };
-            
-                const command = new SendTemplatedEmailCommand(params);
-            
+            const messageData = {
+                from: 'SumBroo no-reply@sumbroo.com',
+                to: user.email,
+                subject: 'Your SumBroo Application',
+                template: 'rejection email',
+                't:variables': JSON.stringify({
+                    rejectionComments: decision,
+                    name: capitalize(user.name)
+                })
+            }
+
+            async function sendMessage() {
                 try {
-                    const data = await sesClient.send(command);
-                    return {
-                        status: 200,
-                        response: { success: true, messageId: data.MessageId }
-                    };
+                  const response = await client.messages.create('sumbroo.com', messageData);
+                  console.log(response);
+                  return response;
                 } catch (err) {
-                    console.error(err);
-                    return {
-                        status: 500,
-                        response: { error: 'Failed to send the email.' }
-                    };
+                  console.error("Error sending email:", );
+                  return res.status(500).json({ error: "Server" });
                 }
             }
-            
-            // Send the email
-            sendEmail(user, decision).then(result => {
-                if (result.status === 200) {
-                    console.log("Email sent successfully:", result.response);
-                    return res.status(200).json({ ok: 'success' });
-                } else {
-                    console.error("Error sending email:", result.response);
-                    return res.status(400).json({ error: err });
-                }
-            }); 
 
-            // remove the user
+            // remove the user before sending the email
             await user.remove();
+              
+            // Send the email
+            const re = await sendMessage();
+            if (re.status === 200) {
+              console.log("Email sent successfully:", result.response);
+              return res.status(200).json({ ok: 'success' });
+            } else {
+                console.error("Error sending email:", result.response);
+                return res.status(400).json({ error: err });
+            }
 
         } else if (decision.some(dec => dec.status === 'reject') && decision.some(dec => dec.status === 'accept')) {
             // update accountStatus to active
             user.accountStatus = 'pending';
             let approvedPlatforms = [];
             let rejectedPlatforms = [];
+            
             for (let i = 0; i < decision.length; i++) {
     
                 if (decision[i].status === 'accept') {
@@ -240,53 +221,44 @@ export default async function handler(req, res) {
             // prepare an onboarding temporary link
             const onboardingLink = `http://localhost:3000/onboarding/${generateOnboardingToken(userId)}`;
 
-            async function sendEmail(user, onboardingLink) {
-                
-                const params = {
-                    Destination: {
-                        ToAddresses: [user.email]
-                    },
-                    Template: 'Rejection_Approval_Template',
-                    TemplateData: JSON.stringify({
-                        name: capitalize(user.name),
-                        onBoarindLink: onboardingLink,
-                        isPlural: approvedPlatforms.length > 1,
-                        isRejectedPlural: rejectedPlatforms.length > 1,
-                        approvedPlatforms: arrayToEnglishList(approvedPlatforms),
-                        rejectedPlatforms: arrayToEnglishList(rejectedPlatforms),
-                        comments: decision
-                    }),
-                    Source: 'no-reply@sumbroo.com'
-                };
-            
-                const command = new SendTemplatedEmailCommand(params);
-            
+            const messageData = {
+                from: 'SumBroo no-reply@sumbroo.com',
+                to: user.email,
+                subject: 'Your SumBroo Application!',
+                template: 'approval rejection email',
+                't:variables': JSON.stringify({
+                    name: capitalize(user.name),
+                    onBoarindLink: onboardingLink,
+                    isPlural: approvedPlatforms.length > 1,
+                    isRejectedPlural: rejectedPlatforms.length > 1,
+                    approvedPlatforms: arrayToEnglishList(approvedPlatforms),
+                    rejectedPlatforms: arrayToEnglishList(rejectedPlatforms),
+                    comments: decision
+                })
+            }
+
+            async function sendMessage() {
                 try {
-                    const data = await sesClient.send(command);
-                    return {
-                        status: 200,
-                        response: { success: true, messageId: data.MessageId }
-                    };
+                  const response = await client.messages.create('sumbroo.com', messageData);
+                  console.log(response);
+                  return response;
                 } catch (err) {
-                    console.error(err);
-                    return {
-                        status: 500,
-                        response: { error: 'Failed to send the email.' }
-                    };
+                  console.error("Error sending email:", );
+                  return res.status(500).json({ error: "Server" });
                 }
             }
             
-
+              
             // Send the email
-            sendEmail(user, onboardingLink).then(result => {
-                if (result.status === 200) {
-                    console.log("Email sent successfully:", result.response);
-                    return res.status(200).json({ ok: 'success' });
-                } else {
-                    console.error("Error sending email:", result.response);
-                    return res.status(400).json({ error: err });
-                }
-            }); 
+            const re = await sendMessage();
+            if (re.status === 200) {
+                console.log("Email sent successfully:", result.response);
+                return res.status(200).json({ ok: 'success' });
+            } else {
+                console.error("Error sending email:", result.response);
+                return res.status(400).json({ error: err });
+            }
+
         }
 
     } catch (err) {
