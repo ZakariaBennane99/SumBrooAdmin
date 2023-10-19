@@ -68,6 +68,8 @@ const Post = ({ post }) => {
 
   }
 
+  console.log('The media elements', post.content.media)
+
   return (
     <div className="dashboard-container">
       <Header />

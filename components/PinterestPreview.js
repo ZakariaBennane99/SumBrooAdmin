@@ -104,6 +104,9 @@ const PinterestPostPreview = ({ pinTitle, pinLink, text, imgUrl, videoUrl, userP
         return processedWords;
     }    
 
+    console.log('Image URL', imgUrl)
+    console.log('Video URL', videoUrl)
+
     return (
         <div className="pinterestPostPreview">
             <div className='mainImg' onMouseEnter={toggleHover} onMouseLeave={toggleHover} >
