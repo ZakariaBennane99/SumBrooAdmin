@@ -312,8 +312,6 @@ export async function getServerSideProps(context) {
       },
     ]);
 
-    console.log('THE POST IN REVIEW', postInReview)
-
     // here connect to the user SM using the token, then
     // get all the boards and insert them into the postInReview
     
