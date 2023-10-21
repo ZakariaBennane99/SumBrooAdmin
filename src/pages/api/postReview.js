@@ -43,7 +43,7 @@ export default async function handler(req, res) {
         subject: 'Your ' + PLATFOTM + ' Post',
         template: template,
         't:variables': JSON.stringify({
-            rejectionComments: decision,
+            platform: PLATFOTM,
             name: capitalize(user.name)
         })
       }
@@ -58,70 +58,17 @@ export default async function handler(req, res) {
           return res.status(500).json({ error: "Server" });
         }
       }
-
-      // remove the user before sending the email
-      await user.remove();
       
       // Send the email
       const re = await sendMessage();
       if (re.status === 200) {
-        console.log("Email sent successfully:", result.response);
-        return res.status(200).json({ ok: 'success' });
+        console.log("Email sent successfully:", re.response);
+        return true;
       } else {
-          console.error("Error sending email:", result.response);
-          return res.status(400).json({ error: err });
+          console.error("Error sending email:", re.response);
+          return false
       }
 
-      async function sendEmail(user, platform, template) {
-        const PLATFOTM = platform.charAt(0).toUpperCase() + platform.slice(1);
-        const params = {
-            Destination: {
-              ToAddresses: [user.email]
-            },
-            Template: template,
-            TemplateData: JSON.stringify({
-              subject: 'Your ' + PLATFOTM + ' Post',
-              platform: PLATFOTM,
-              name: _.startCase(user.name)
-            }),
-            Source: 'no-reply@sumbroo.com'
-        };
-    
-        const command = new SendTemplatedEmailCommand(params);
-        
-        const sesClient = new SESClient({
-          region: process.env.AWS_REGION,
-          credentials: {
-              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-          }
-        });
-    
-        try {
-            const data = await sesClient.send(command);
-            return {
-                status: 'ok',
-                response: { success: true, messageId: data.MessageId }
-            };
-        } catch (err) {
-            console.error(err);
-            return {
-                status: 'notOk',
-                response: { error: 'Failed to send the email.' }
-            };
-        }
-      }  
-
-      // Send the email
-      sendEmail(user, platform, template).then(result => {
-          if (result.status === 'ok') {
-              console.log("Email sent successfully:", result.response);
-              return true
-          } else {
-              console.error("Error sending email:", result.response);
-              return false
-          }
-      });
 
     }
     
