@@ -1,11 +1,18 @@
 import { connectUserDB } from '../../../utils/connectUserDB';
 import { check, validationResult } from 'express-validator';
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { SESClient, SendTemplatedEmailCommand } from "@aws-sdk/client-ses";
 import mongoose from 'mongoose';
 import _ from 'lodash';
 import he from 'he';
+import formData from 'form-data';
+import Mailgun from 'mailgun.js';
 
+
+// set up MailGun
+
+const mailgun = new Mailgun(formData);
+
+const client = mailgun.client({ username: 'api', key: process.env.MAILGUN_API_KEY });
 
 
 export default async function handler(req, res) {
@@ -29,11 +36,12 @@ export default async function handler(req, res) {
     // send email
     async function sendNotificationEmail(user, platform, template) {
       // now send an email informing them about the decision
+      const PLATFOTM = platform.charAt(0).toUpperCase() + platform.slice(1);
       const messageData = {
         from: 'SumBroo no-reply@sumbroo.com',
         to: user.email,
         subject: 'Your ' + PLATFOTM + ' Post',
-        template: 'rejection email',
+        template: template,
         't:variables': JSON.stringify({
             rejectionComments: decision,
             name: capitalize(user.name)

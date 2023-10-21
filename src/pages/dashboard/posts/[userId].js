@@ -28,13 +28,6 @@ const Post = ({ post }) => {
 
     setSubmitClicked(true)
 
-    // here you have to send whether the post was 
-    // accepted or rejected, if rejected include 
-    // comment. The comment should be 
-    // a series of phrases each start with an emoji
-    // and ends with / (to split the phrases and
-    // present them nicely to the user)
-
     try {
 
       const response = await fetch('http://localhost:3000/api/postReview', {
