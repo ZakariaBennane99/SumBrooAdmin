@@ -345,7 +345,7 @@ export default async function handler(req, res) {
           return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
         }
 
-        const emailSent = await sendNotificationEmail(userInfo, platform, 'Post_Rejection_Template');
+        const emailSent = await sendNotificationEmail(userInfo, platform, 'post rejection');
 
         console.log('IS EMAIL SENT FROM REJECTION', emailSent)
  
@@ -445,7 +445,7 @@ export default async function handler(req, res) {
 
 
         // send the email
-        const emailSent = await sendNotificationEmail(userInfo, platform, 'Post_Approval_Template');
+        const emailSent = await sendNotificationEmail(userInfo, platform, 'post approval');
 
 
         // update the postStatus to published 
