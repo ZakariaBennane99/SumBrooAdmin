@@ -2,10 +2,11 @@ import { connectUserDB } from '../../../utils/connectUserDB';
 import { check, validationResult } from 'express-validator';
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import mongoose from 'mongoose';
-import _ from 'lodash';
+import _, { capitalize } from 'lodash';
 import he from 'he';
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
+
 
 
 // set up MailGun
@@ -34,7 +35,7 @@ export default async function handler(req, res) {
     }
 
     // send email
-    async function sendNotificationEmail(user, platform, template) {
+    async function sendNotificationEmail(user, platform, template, publishedLink) {
       // now send an email informing them about the decision
       const PLATFOTM = platform.charAt(0).toUpperCase() + platform.slice(1);
       const messageData = {
@@ -43,8 +44,9 @@ export default async function handler(req, res) {
         subject: 'Your ' + PLATFOTM + ' Post',
         template: template,
         't:variables': JSON.stringify({
+            name: capitalize(user.name),
             platform: PLATFOTM,
-            name: capitalize(user.name)
+            publishedLink: publishedLink
         })
       }
 
@@ -73,7 +75,7 @@ export default async function handler(req, res) {
     }
     
 
-    async function uploadVideoFile(vidUrl) {
+    async function uploadVideoFile(vidUrl, intent) {
     
       // Fetch the file from the S3 URL
       const response = await fetch(vidUrl);
@@ -81,22 +83,24 @@ export default async function handler(req, res) {
     
       // Create FormData object
       const formData = new FormData();
-      formData.append('x-amz-date', '20221012T154547Z');
-      formData.append('x-amz-signature', '{x-amz-signature}');
-      formData.append('x-amz-security-token', '{x-amz-security-token}');
-      formData.append('x-amz-algorithm', 'AWS4-HMAC-SHA256');
-      formData.append('key', 'uploads/17/4d/be/2:video:704109860400394553:5258848560742447767');
-      formData.append('policy', '{policy}');
-      formData.append('x-amz-credential', '{x-amz-credential}');
-      formData.append('Content-Type', 'multipart/form-data');
+      formData.append('x-amz-date', intent['x-amz-date']);
+      formData.append('x-amz-signature', intent['x-amz-signature']);
+      formData.append('x-amz-security-token', intent['x-amz-security-token']);
+      formData.append('x-amz-algorithm', intent['x-amz-algorithm']);
+      formData.append('key', intent['key']);
+      formData.append('policy', intent['policy']);
+      formData.append('x-amz-credential', intent['x-amz-credential']);
+      formData.append('Content-Type',  intent['Content-Type']);
       formData.append('file', blob);
     
       // Send the POST request to upload the file
-      const uploadUrl = 'https://pinterest-media-upload.s3-accelerate.amazonaws.com/';
+      const uploadUrl = intent['upload_url']
       const uploadResponse = await fetch(uploadUrl, {
         method: 'POST',
         body: formData,
       });
+
+      console.log('the upload section', uploadResponse)
     
       if (uploadResponse.ok) {
         console.log('File uploaded successfully');
@@ -189,14 +193,16 @@ export default async function handler(req, res) {
 
       // now get the S3 URL, and hit upload
       const videoURL = `https://sumbroo-media-upload.s3.us-east-1.amazonaws.com/${platform}-${userId}`;
-      const uploadInfo = await uploadVideoFile(videoURL);
+      const uploadInfo = await uploadVideoFile(videoURL, intent);
 
       if (!uploadInfo) {
         return null
       }
 
       // check if the video has been uploaded
-      const uploaded = await checkVideoUpload(uploadInfo.media_id);
+      const uploaded = await checkVideoUpload(intent['media_id']);
+
+      console.log('Is uploaded', uploaded)
 
       if (!uploaded) {
         return null
@@ -204,7 +210,6 @@ export default async function handler(req, res) {
 
       // update the data with the new media_id
       data.media_source.media_id = uploadInfo.media_id;
-
       const uploadedEntireVideo = await uploadEntireVidContentToPin(token, data);
 
       if (!uploadedEntireVideo) {
@@ -212,7 +217,7 @@ export default async function handler(req, res) {
       }
 
       // video Pin has been uploaded!
-      return true
+      return uploadedEntireVideo
 
     }
 
@@ -345,7 +350,7 @@ export default async function handler(req, res) {
           return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
         }
 
-        const emailSent = await sendNotificationEmail(userInfo, platform, 'post rejection');
+        const emailSent = await sendNotificationEmail(userInfo, platform, 'post rejection', '');
 
         console.log('IS EMAIL SENT FROM REJECTION', emailSent)
  
@@ -405,7 +410,7 @@ export default async function handler(req, res) {
             }
           };
 
-          // call a function to post to Pinterest Image
+          // call a function to post an Image to Pinterest 
           const pinUploaded = await createPin(data, accessToken)
 
           console.log('The PinUpload Results', pinUploaded)
@@ -421,6 +426,8 @@ export default async function handler(req, res) {
 
         if (userPost && userPost.content.media.mediaType === 'video') {
 
+          const FILE_KEY = 'pinterest-video-cover-' + user._id;
+
           // structure the image upload data
           const data = {
             title: userPost.content.textualData.pinterest.title,
@@ -429,7 +436,7 @@ export default async function handler(req, res) {
             board_id: selectedBoard,
             media_source: {
               source_type: "video_id",
-              cover_image_url: `https://sumbroo-media-upload.s3.us-east-1.amazonaws.com/${platform}-${userId}-videoCover`,
+              cover_image_url: `https://sumbroo-media-upload.s3.us-east-1.amazonaws.com/${FILE_KEY}`,
               media_id: ""
             }
           };
@@ -443,10 +450,11 @@ export default async function handler(req, res) {
 
         }
 
+        console.log(pin)
+
 
         // send the email
-        const emailSent = await sendNotificationEmail(userInfo, platform, 'post approval');
-
+        const emailSent = await sendNotificationEmail(userInfo, platform, 'post approval', );
 
         // update the postStatus to published 
         // remove the content

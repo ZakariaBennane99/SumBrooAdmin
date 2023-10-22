@@ -7,6 +7,8 @@ import he from 'he';
 
 const Post = ({ post }) => {
 
+  console.log('The post', post)
+
   const postId = post.postId;
   const userId = post.userId;
   const platform = post.platform;
@@ -138,7 +140,7 @@ const Post = ({ post }) => {
           text={post.content.textualData.pinterest.description}
           imgUrl={post.content.media.mediaType === 'image' ? post.content.media.awsLink : ''}
           videoUrl={post.content.media.mediaType === 'video' ? post.content.media.awsLink : ''}
-          userProfileLink={post.profileLink}
+          userProfileLink={he.decode(post.profileLink)}
         />
       </div>
     </div>
@@ -256,6 +258,8 @@ export async function getServerSideProps(context) {
     // get the user token, and the refresh token
     let user = await UserModel.findOne({ _id: hostId });
 
+    console.log(user.email)
+
     let platformData = user.socialMediaLinks.find(link => link.platformName === platform);
 
     // check the accessToken expiration
@@ -316,6 +320,8 @@ export async function getServerSideProps(context) {
     // get all the boards and insert them into the postInReview
     
     const res = await fetchBoards(platformData.accessToken);
+
+    console.log('the res', res)
 
     // now get the borads: id, name, description
     const pinBoards = res.items.map(board => {
