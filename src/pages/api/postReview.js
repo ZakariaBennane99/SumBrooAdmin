@@ -51,6 +51,7 @@ export default async function handler(req, res) {
     // send email
     async function sendNotificationEmail(user, platform, template, publishedLink) {
       console.log('The template and the publishedLink', template, publishedLink)
+      console.log('The name', capitalize(user.name))
       // now send an email informing them about the decision
       const PLATFOTM = platform.charAt(0).toUpperCase() + platform.slice(1);
       const messageData = {
@@ -549,7 +550,7 @@ export default async function handler(req, res) {
 
 
         // send the email
-        const emailSent = await sendNotificationEmail(userInfo, platform, 'post approval', publishedPostId);
+        const emailSent = await sendNotificationEmail(userInfo, platform, 'post approval', publishedPostLink);
 
         console.log('The emailSent kickback', emailSent)
 
@@ -576,7 +577,9 @@ export default async function handler(req, res) {
           { 
             $set: { 
               "socialMediaLinks.$.posts.$[elem].postStatus": "published",
-              "socialMediaLinks.$.posts.$[elem].postLink": publishedPostLink
+              "socialMediaLinks.$.posts.$[elem].postLink": publishedPostLink,
+              "socialMediaLinks.$.posts.$[elem].postId": publishedPostLink.match(/\d+$/)[0],
+              "socialMediaLinks.$.posts.$[elem].publishingDate": new Date()
             },
             $unset: { "socialMediaLinks.$.posts.$[elem].content": "" }
           },

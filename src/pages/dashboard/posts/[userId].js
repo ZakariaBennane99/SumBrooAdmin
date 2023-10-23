@@ -63,7 +63,6 @@ const Post = ({ post }) => {
 
   }
 
-  console.log('The media elements', post.content.media)
 
   return (
     <div className="dashboard-container">
@@ -302,7 +301,7 @@ export async function getServerSideProps(context) {
       {
         $project: {
           postId: "$socialMediaLinks.posts._id",
-          pinTitle: "$socialMediaLinks.posts.postTitle",
+          pinTitle: "$socialMediaLinks.posts.content.textualData.pinterest.title",
           publishingDate: "$socialMediaLinks.posts.publishingDate",
           content: "$socialMediaLinks.posts.content",
           targetingNiche: "$socialMediaLinks.posts.targetingNiche",
