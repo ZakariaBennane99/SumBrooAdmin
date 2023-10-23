@@ -7,8 +7,6 @@ import he from 'he';
 
 const Post = ({ post }) => {
 
-  console.log('The post', post)
-
   const postId = post.postId;
   const userId = post.userId;
   const platform = post.platform;

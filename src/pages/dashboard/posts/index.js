@@ -23,8 +23,6 @@ const Posts = ({ posts }) => {
 
     const router = useRouter();
 
-    console.log('The posts', posts)
-
     return (<div className="dashboard-container">
         <Header />
         <div className="posts-container">

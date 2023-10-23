@@ -2,7 +2,7 @@ import { connectUserDB } from '../../../utils/connectUserDB';
 import { check, validationResult } from 'express-validator';
 import { S3Client, DeleteObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import mongoose from 'mongoose';
-import _, { capitalize } from 'lodash';
+import _ from 'lodash';
 import he from 'he';
 import FormData from 'form-data';
 import Mailgun from 'mailgun.js';
@@ -21,6 +21,7 @@ const s3Client = new S3Client({
   },
 })
 
+function 
 
 
 // set up MailGun
@@ -51,7 +52,7 @@ export default async function handler(req, res) {
     // send email
     async function sendNotificationEmail(user, platform, template, publishedLink) {
       console.log('The template and the publishedLink', template, publishedLink)
-      console.log('The name', capitalize(user.name))
+      console.log('The name capitalized:', capitalize(user.name))
       // now send an email informing them about the decision
       const PLATFOTM = platform.charAt(0).toUpperCase() + platform.slice(1);
       const messageData = {
