@@ -21,7 +21,12 @@ const s3Client = new S3Client({
   },
 })
 
-function 
+
+function capitalize(str) {
+  return str.toLowerCase().split(' ').map(word => {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+}
 
 
 // set up MailGun
@@ -52,7 +57,6 @@ export default async function handler(req, res) {
     // send email
     async function sendNotificationEmail(user, platform, template, publishedLink) {
       console.log('The template and the publishedLink', template, publishedLink)
-      console.log('The name capitalized:', capitalize(user.name))
       // now send an email informing them about the decision
       const PLATFOTM = platform.charAt(0).toUpperCase() + platform.slice(1);
       const messageData = {
@@ -61,7 +65,7 @@ export default async function handler(req, res) {
         subject: 'Your ' + PLATFOTM + ' Post',
         template: template,
         't:variables': JSON.stringify({
-            name: capitalize(user.name),
+            name: capitalize(user.userName),
             platform: PLATFOTM,
             publishedLink: publishedLink
         })
@@ -551,9 +555,8 @@ export default async function handler(req, res) {
 
 
         // send the email
-        const emailSent = await sendNotificationEmail(userInfo, platform, 'post approval', publishedPostLink);
+        await sendNotificationEmail(userInfo, platform, 'post approval', publishedPostLink);
 
-        console.log('The emailSent kickback', emailSent)
 
         // update the hostUser's lastReceivingDate to the latest date
         await UserModel.updateOne(
@@ -588,6 +591,10 @@ export default async function handler(req, res) {
             arrayFilters: [{ "elem._id": new mongoose.Types.ObjectId(postId) }]
           }
         );
+
+        // send success to the front-end
+        return res.status(201).json({ success: 'ok' });
+
 
       }
       
