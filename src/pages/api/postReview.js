@@ -1,17 +1,32 @@
 import { connectUserDB } from '../../../utils/connectUserDB';
 import { check, validationResult } from 'express-validator';
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, DeleteObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import mongoose from 'mongoose';
 import _, { capitalize } from 'lodash';
 import he from 'he';
-import formData from 'form-data';
+import FormData from 'form-data';
 import Mailgun from 'mailgun.js';
+import axios from 'axios';
+import { fileTypeFromStream } from 'file-type';
+import { Readable } from 'stream';
+
+
+
+
+// set up AWS S3
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  },
+})
 
 
 
 // set up MailGun
 
-const mailgun = new Mailgun(formData);
+const mailgun = new Mailgun(FormData);
 
 const client = mailgun.client({ username: 'api', key: process.env.MAILGUN_API_KEY });
 
@@ -36,6 +51,7 @@ export default async function handler(req, res) {
 
     // send email
     async function sendNotificationEmail(user, platform, template, publishedLink) {
+      console.log('The template and the publishedLink', template, publishedLink)
       // now send an email informing them about the decision
       const PLATFOTM = platform.charAt(0).toUpperCase() + platform.slice(1);
       const messageData = {
@@ -73,14 +89,29 @@ export default async function handler(req, res) {
 
 
     }
-    
 
-    async function uploadVideoFile(vidUrl, intent) {
+
+    function getFileKey(url) {
+      const match = url.match(/pinterest-[^/]+/);
+      return match ? match[0] : null;
+    }
     
+    async function uploadVideoFile(vidUrl, intent, upload_url) {
+
       // Fetch the file from the S3 URL
-      const response = await fetch(vidUrl);
-      const blob = await response.blob();
-    
+      const response = await axios.get(vidUrl, { responseType: 'stream' });
+
+      const FILE_DATA = response.data; 
+
+      const FILE_EXTENSION = await fileTypeFromStream(FILE_DATA);
+
+      console.log('The FILE EXTENSION', FILE_EXTENSION)
+
+      // the file name without extension
+      const fileKey = getFileKey(vidUrl);
+
+      const fileName = `${fileKey}.${FILE_EXTENSION.ext}`;
+
       // Create FormData object
       const formData = new FormData();
       formData.append('x-amz-date', intent['x-amz-date']);
@@ -90,17 +121,18 @@ export default async function handler(req, res) {
       formData.append('key', intent['key']);
       formData.append('policy', intent['policy']);
       formData.append('x-amz-credential', intent['x-amz-credential']);
-      formData.append('Content-Type',  intent['Content-Type']);
-      formData.append('file', blob);
+      formData.append('file', FILE_DATA, { filename: fileName });
+
+      const headers = formData.getHeaders();
     
       // Send the POST request to upload the file
-      const uploadUrl = intent['upload_url']
-      const uploadResponse = await fetch(uploadUrl, {
+      const uploadResponse = await fetch(upload_url, {
         method: 'POST',
         body: formData,
+        headers: headers
       });
 
-      console.log('the upload section', uploadResponse)
+      console.log('the upload section to AWS', uploadResponse)
     
       if (uploadResponse.ok) {
         console.log('File uploaded successfully');
@@ -111,9 +143,9 @@ export default async function handler(req, res) {
       }
     }
     
-    async function postVideoIntent() {
+    async function postVideoIntent(token) {
 
-      const authorization = `Basic ${Buffer.from(`1484362:${process.env.PINTEREST_APP_SECRET}`).toString('base64')}`;
+      // const authorization = `Basic ${Buffer.from(`1484362:${process.env.PINTEREST_APP_SECRET}`).toString('base64')}`;
 
       const url = 'https://api.pinterest.com/v5/media';
       
@@ -125,14 +157,14 @@ export default async function handler(req, res) {
         const response = await fetch(url, {
           method: 'POST',
           headers: {
-            'Authorization': authorization,
-            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify(data)
         });
         
         const result = await response.json();
-        console.log(result);
+        console.log('The Post results from the postVideoIntent', result);
         return result
       } catch (error) {
         console.error('Error:', error);
@@ -173,7 +205,7 @@ export default async function handler(req, res) {
         });
     
         const result = await response.json();
-        console.log(result);
+        console.log('The results from the uploadEntireVideoContentPin', result);
         return result
 
       } catch (error) {
@@ -185,7 +217,7 @@ export default async function handler(req, res) {
     async function createPinVideo(userId, platform, data, token) {
 
       // first register your intent
-      const intent = await postVideoIntent();
+      const intent = await postVideoIntent(token);
 
       if (!intent) {
         return null
@@ -193,16 +225,10 @@ export default async function handler(req, res) {
 
       // now get the S3 URL, and hit upload
       const videoURL = `https://sumbroo-media-upload.s3.us-east-1.amazonaws.com/${platform}-${userId}`;
-      const uploadInfo = await uploadVideoFile(videoURL, intent);
-
-      if (!uploadInfo) {
-        return null
-      }
+      const uploadInfo = await uploadVideoFile(videoURL, intent.upload_parameters, intent.upload_url);
 
       // check if the video has been uploaded
       const uploaded = await checkVideoUpload(intent['media_id']);
-
-      console.log('Is uploaded', uploaded)
 
       if (!uploaded) {
         return null
@@ -325,6 +351,9 @@ export default async function handler(req, res) {
         // delete the media from AWS S3
         const FILE_KEY = 'pinterest-' + userId;
 
+        // the video file cover
+        const VID_FILE_COVER_KEY = 'pinterest-video-cover-' + userId;
+
         // Initialize the S3 Client
         const s3Client = new S3Client({
           region: process.env.AWS_REGION,
@@ -337,7 +366,9 @@ export default async function handler(req, res) {
         // Create a new instance of the DeleteObjectCommand
         const command = new DeleteObjectCommand({
           Bucket: 'sumbroo-media-upload',
-          Key: FILE_KEY,
+          Delete: {
+            Objects: [FILE_KEY, VID_FILE_COVER_KEY],
+          },
         });
 
         try {
@@ -369,9 +400,11 @@ export default async function handler(req, res) {
       
         const userPost = user?.socialMediaLinks[0].posts[0];
 
+        const hostId = userPost.hostUserId;
+
         const hostUser = await UserModel.findOne(
           { 
-            _id: new mongoose.Types.ObjectId(userPost.hostUserId), 
+            _id: new mongoose.Types.ObjectId(hostId), 
             "socialMediaLinks.platformName": 'pinterest' // WOULD BE CHANGED WHEN ADDING ANOTHER PLATFORM
           },
           { "socialMediaLinks.$": 1 } // projection to get only the matched socialMediaLink
@@ -396,11 +429,17 @@ export default async function handler(req, res) {
         // hostUserAccessToken
         const accessToken = hostUserPlatform.accessToken;
 
+        // host user's profileLink
+        const hostProfileUsername = he.decode(hostUserPlatform.profileLink).match(/\/([^/]+)\/$/)[1];
+
+        // this is the id of the published post
+        let publishedPostId;
+
         if (userPost && userPost.content.media.mediaType === 'image') {
 
           // structure the image upload data
           const data = {
-            title: userPost.content.textualData.pinterest.title,
+            title: _.startCase(userPost.content.textualData.pinterest.title) + ' | 📌 By ' + '@' + hostProfileUsername,
             description: userPost.content.textualData.pinterest.description,
             link: he.decode(userPost.content.textualData.pinterest.destinationLink),
             board_id: selectedBoard,
@@ -413,7 +452,12 @@ export default async function handler(req, res) {
           // call a function to post an Image to Pinterest 
           const pinUploaded = await createPin(data, accessToken)
 
-          console.log('The PinUpload Results', pinUploaded)
+          publishedPostId = pinUploaded.id;
+
+          // add the current UTC date to HostUser
+          // hostUser
+
+          console.log('The PinUpload Results', pinUploaded.id)
 
 
           // here check if uploaded, delete from AWS S3, otherwise return an error
@@ -430,7 +474,7 @@ export default async function handler(req, res) {
 
           // structure the image upload data
           const data = {
-            title: userPost.content.textualData.pinterest.title,
+            title: _.startCase(userPost.content.textualData.pinterest.title) + ' | 📌 By ' + '@' + hostProfileUsername,
             description: userPost.content.textualData.pinterest.description,
             link: he.decode(userPost.content.textualData.pinterest.destinationLink),
             board_id: selectedBoard,
@@ -444,17 +488,49 @@ export default async function handler(req, res) {
           // call the function to post to Pinterest Video
           const pinResults = await createPinVideo(userId, platform, data, accessToken);
 
+          console.log('The video posting results', pinResults)
+
+          publishedPostId = pinUploaded.id
+
           if (!pinResults) {
             return res.status(400).json({ error: pinUploaded });
           }
 
         }
 
-        console.log(pin)
+        // Create a new instance of the DeleteObjectCommand
+        const command = new DeleteObjectCommand({
+          Bucket: 'sumbroo-media-upload',
+          Delete: {
+            Objects: [FILE_KEY, VID_FILE_COVER_KEY],
+          },
+        });
+
+        try {
+          // Try to send the command to delete the object
+          await s3Client.send(command);
+          console.log(`File with KEY: ${FILE_KEY} deleted successfully`);
+        } catch (error) {
+          // Catch any error that occurs
+          console.error("Error deleting file:", error);
+          return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
+        }
 
 
         // send the email
-        const emailSent = await sendNotificationEmail(userInfo, platform, 'post approval', );
+        const emailSent = await sendNotificationEmail(userInfo, platform, 'post approval', 'https://www.pinterest.com/pin/' + publishedPostId);
+
+        // update the hostUser's lastReceivingDate to the latest date
+        await UserModel.updateOne(
+          { 
+            _id: new mongoose.Types.ObjectId(hostId), 
+            "socialMediaLinks.platformName": 'pinterest' // switch to dynamic variable as needed
+          },
+          { 
+            $currentDate: { "socialMediaLinks.$.lastReceivingDate": true }
+          }
+        );
+        
 
         // update the postStatus to published 
         // remove the content

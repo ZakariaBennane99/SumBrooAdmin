@@ -337,7 +337,7 @@ export async function getServerSideProps(context) {
     post.pinBoards = pinBoards;
   
   } catch (error) {
-    console.error('Server error', error.message);
+    console.error('Server error', error);
     return {
       props: {
         error: true
