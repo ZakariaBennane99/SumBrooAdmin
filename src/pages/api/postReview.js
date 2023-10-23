@@ -459,7 +459,7 @@ export default async function handler(req, res) {
         const accessToken = hostUserPlatform.accessToken;
 
         // host user's profileLink
-        const hostProfileUsername = he.decode(hostUserPlatform.profileLink).match(/\/([^/]+)\/$/)[1];
+        const userProfileUsername = he.decode(userPost.profileLink).match(/\/([^/]+)\/$/)[1];
 
         // this is the id of the published post
         let publishedPostLink = 'https://www.pinterest.com/pin/';
@@ -469,7 +469,7 @@ export default async function handler(req, res) {
           // structure the image upload data
           const data = {
             title: _.startCase(userPost.content.textualData.pinterest.title),
-            description: userPost.content.textualData.pinterest.description + ' | 📌 By ' + '#' + hostProfileUsername,
+            description: userPost.content.textualData.pinterest.description + ' | 📌 By ' + '#' + userProfileUsername,
             link: he.decode(userPost.content.textualData.pinterest.destinationLink),
             board_id: selectedBoard,
             media_source: {
@@ -502,7 +502,7 @@ export default async function handler(req, res) {
           // structure the image upload data
           const data = {
             title: _.startCase(userPost.content.textualData.pinterest.title),
-            description: userPost.content.textualData.pinterest.description + ' | 📌 By ' + '#' + hostProfileUsername,
+            description: userPost.content.textualData.pinterest.description + ' | 📌 By ' + '#' + userProfileUsername,
             link: he.decode(userPost.content.textualData.pinterest.destinationLink),
             board_id: selectedBoard,
             media_source: {
@@ -531,6 +531,9 @@ export default async function handler(req, res) {
 
         // the video file cover
         const VID_FILE_COVER_KEY = 'pinterest-video-cover-' + userId;
+
+
+        ////// the following AWS instance doesn't seem to work as nothing get deleted
 
         // Create a new instance of the DeleteObjectsCommand
         const command = new DeleteObjectsCommand({
