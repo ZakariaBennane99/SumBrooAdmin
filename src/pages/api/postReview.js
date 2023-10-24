@@ -410,24 +410,24 @@ export default async function handler(req, res) {
           return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
         }
 
-        const emailSent = await sendNotificationEmail(userInfo, platform, 'post rejection', '');
+        await sendNotificationEmail(userInfo, platform, 'post rejection', '');
 
-        console.log('IS EMAIL SENT FROM REJECTION', emailSent)
- 
+        // send success to the front-end
+        return res.status(201).json({ success: 'ok' });
 
       } else {
         
         // publish the post to Pinterest
         // check the media type first
-        const user = await UserModel.findOne(
-          { 
-            _id: new mongoose.Types.ObjectId(userId), 
-            "socialMediaLinks.posts._id": new mongoose.Types.ObjectId(postId) 
-          },
-          { "socialMediaLinks.posts.$": 1 } // projection to get only the matched post
-        );
-      
-        const userPost = user?.socialMediaLinks[0].posts[0];
+        const user = await UserModel.aggregate([
+          { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+          { $unwind: "$socialMediaLinks" },
+          { $unwind: "$socialMediaLinks.posts" },
+          { $match: { "socialMediaLinks.posts._id": new mongoose.Types.ObjectId(postId) } },
+          { $project: { _id: 0, post: "$socialMediaLinks.posts" } }
+        ]);
+
+        const userPost = user ? user[0].post : '';
 
         const hostId = userPost.hostUserId;
 
@@ -456,10 +456,12 @@ export default async function handler(req, res) {
         }
 
         // hostUserAccessToken
-        const accessToken = hostUserPlatform.accessToken;
+        const accessToken = hostUserPlatform.accessToken; 
 
-        // host user's profileLink
-        const userProfileUsername = he.decode(userPost.profileLink).match(/\/([^/]+)\/$/)[1];
+        // the sending user's profileLink
+        const usr = await UserModel.findOne({ _id: userId })
+        const pinterestUsr = usr.socialMediaLinks.find(el => el.platformName === 'pinterest')
+        const userProfileUsername = he.decode(pinterestUsr.profileLink).match(/\/([^/]+)\/$/)[1];
 
         // this is the id of the published post
         let publishedPostLink = 'https://www.pinterest.com/pin/';
@@ -493,7 +495,6 @@ export default async function handler(req, res) {
           } 
 
         }
-
 
         if (userPost && userPost.content.media.mediaType === 'video') {
 
@@ -597,7 +598,6 @@ export default async function handler(req, res) {
 
         // send success to the front-end
         return res.status(201).json({ success: 'ok' });
-
 
       }
       

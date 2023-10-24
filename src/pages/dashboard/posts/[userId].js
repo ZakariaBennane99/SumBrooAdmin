@@ -2,10 +2,13 @@ import Header from "../../../../components/Header";
 import PinterestPreview from "../../../../components/PinterestPreview";
 import { Tadpole } from "react-svg-spinners";
 import { useState } from "react";
+import { useRouter } from 'next/router';
 import he from 'he';
 
 
 const Post = ({ post }) => {
+
+  const router = useRouter();
 
   const postId = post.postId;
   const userId = post.userId;
@@ -47,7 +50,9 @@ const Post = ({ post }) => {
 
       let data = await response.json();
 
-      console.log('The response', data)
+      if (data.success === 'ok') {
+        router.push('/dashboard');
+      }
 
     
     } catch (error) {
@@ -255,8 +260,6 @@ export async function getServerSideProps(context) {
     // get the user token, and the refresh token
     let user = await UserModel.findOne({ _id: hostId });
 
-    console.log(user.email)
-
     let platformData = user.socialMediaLinks.find(link => link.platformName === platform);
 
     // check the accessToken expiration
@@ -318,7 +321,6 @@ export async function getServerSideProps(context) {
     
     const res = await fetchBoards(platformData.accessToken);
 
-    console.log('the res', res)
 
     // now get the borads: id, name, description
     const pinBoards = res.items.map(board => {
@@ -341,6 +343,8 @@ export async function getServerSideProps(context) {
       }
     };
   }
+
+  console.log('The post just right before sednin to the front end', post)
 
   return {
     props: {
