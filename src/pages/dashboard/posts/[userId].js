@@ -8,6 +8,8 @@ import he from 'he';
 
 const Post = ({ post }) => {
 
+  console.log('the post', post)
+
   const router = useRouter();
 
   const postId = post.postId;

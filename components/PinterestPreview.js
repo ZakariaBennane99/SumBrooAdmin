@@ -14,6 +14,8 @@ const PinterestPostPreview = ({ pinTitle, pinLink, text, imgUrl, videoUrl, userP
     const [playedSeconds, setPlayedSeconds] = useState(0)
     const [totalDuration, setTotalDuration] = useState(0)
 
+    console.log('THE USERPROFILE', userProfileLink)
+
     const togglePlayPause = () => {
         setPlaying(!playing);
     };
@@ -175,7 +177,7 @@ const PinterestPostPreview = ({ pinTitle, pinLink, text, imgUrl, videoUrl, userP
                 </div>
                 { pinLink ? <a href={pinLink} target="_blank">{extractDomain(pinLink)}</a> : '' }
                 <p className='pinTitle' onClick={ () => {window.open(pinLink, '_blank')} }>{_.startCase(pinTitle)}</p>
-                <p className='pinDesc'>{parseText(text)} | 📌 by <span className='hashtag' onClick={ () => {window.open(`${userProfileLink}`, '_blank')} }>#{userProfileLink.match(/\/([^/]+)\/$/)[1]}</span></p>
+                <p className='pinDesc'>{parseText(text)} | 📌 by <span className='hashtag' onClick={ () => {window.open(`${userProfileLink}`, '_blank')} }>#{userProfileLink.match(/\/([^/]+)\/?$/)[1]}</span></p>
                 <div className='pinnerInfo'>
                     <div>
                         <img src='/sm/pinterest.svg' />

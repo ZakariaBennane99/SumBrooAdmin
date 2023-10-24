@@ -1,6 +1,6 @@
 import { connectUserDB } from '../../../utils/connectUserDB';
 import { check, validationResult } from 'express-validator';
-import { S3Client, DeleteObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
+import { S3Client, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import mongoose from 'mongoose';
 import _ from 'lodash';
 import he from 'he';
@@ -393,7 +393,7 @@ export default async function handler(req, res) {
         });
 
         // Create a new instance of the DeleteObjectCommand
-        const command = new DeleteObjectCommand({
+        const command = new DeleteObjectsCommand({
           Bucket: 'sumbroo-media-upload',
           Delete: {
             Objects: [FILE_KEY, VID_FILE_COVER_KEY],
@@ -549,8 +549,8 @@ export default async function handler(req, res) {
 
         try {
           // Try to send the command to delete the object
-          await s3Client.send(command);
-          console.log(`Files deleted successfully`);
+          const r = await s3Client.send(command);
+          console.log(`Files deleted successfully`, r);
         } catch (error) {
           // Catch any error that occurs
           console.error("Error deleting file:", error);
