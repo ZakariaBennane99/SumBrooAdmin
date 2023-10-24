@@ -1,6 +1,5 @@
 import { connectUserDB } from '../../../utils/connectUserDB';
 import { check, validationResult } from 'express-validator';
-import { S3Client, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import mongoose from 'mongoose';
 import _ from 'lodash';
 import he from 'he';
@@ -8,18 +7,6 @@ import FormData from 'form-data';
 import Mailgun from 'mailgun.js';
 import axios from 'axios';
 import { fileTypeFromStream } from 'file-type';
-
-
-
-
-// set up AWS S3
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-  },
-})
 
 
 function capitalize(str) {
@@ -377,39 +364,6 @@ export default async function handler(req, res) {
         );
         
 
-        // delete the media from AWS S3
-        const FILE_KEY = 'pinterest-' + userId;
-
-        // the video file cover
-        const VID_FILE_COVER_KEY = 'pinterest-video-cover-' + userId;
-
-        // Initialize the S3 Client
-        const s3Client = new S3Client({
-          region: process.env.AWS_REGION,
-          credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-          },
-        });
-
-        // Create a new instance of the DeleteObjectCommand
-        const command = new DeleteObjectsCommand({
-          Bucket: 'sumbroo-media-upload',
-          Delete: {
-            Objects: [FILE_KEY, VID_FILE_COVER_KEY],
-          },
-        });
-
-        try {
-          // Try to send the command to delete the object
-          await s3Client.send(command);
-          console.log(`File with KEY: ${FILE_KEY} deleted successfully`);
-        } catch (error) {
-          // Catch any error that occurs
-          console.error("Error deleting file:", error);
-          return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
-        }
-
         await sendNotificationEmail(userInfo, platform, 'post rejection', '');
 
         // send success to the front-end
@@ -461,7 +415,7 @@ export default async function handler(req, res) {
         // the sending user's profileLink
         const usr = await UserModel.findOne({ _id: userId })
         const pinterestUsr = usr.socialMediaLinks.find(el => el.platformName === 'pinterest')
-        const userProfileUsername = he.decode(pinterestUsr.profileLink).match(/\/([^/]+)\/$/)[1];
+        const userProfileUsername = he.decode(pinterestUsr.profileLink).match(/\/([^/]+)\/?$/)[1];
 
         // this is the id of the published post
         let publishedPostLink = 'https://www.pinterest.com/pin/';
@@ -526,41 +480,8 @@ export default async function handler(req, res) {
 
         }
 
-
-        // delete the media from AWS S3
-        const FILE_KEY = 'pinterest-' + userId;
-
-        // the video file cover
-        const VID_FILE_COVER_KEY = 'pinterest-video-cover-' + userId;
-
-
-        ////// the following AWS instance doesn't seem to work as nothing get deleted
-
-        // Create a new instance of the DeleteObjectsCommand
-        const command = new DeleteObjectsCommand({
-          Bucket: 'sumbroo-media-upload',
-          Delete: {
-            Objects: [
-              { Key: FILE_KEY },
-              { Key: VID_FILE_COVER_KEY }
-            ],
-          },
-        });
-
-        try {
-          // Try to send the command to delete the object
-          const r = await s3Client.send(command);
-          console.log(`Files deleted successfully`, r);
-        } catch (error) {
-          // Catch any error that occurs
-          console.error("Error deleting file:", error);
-          return res.status(500).json({ msg: 'Error deleting the media from AWS S3.' });
-        }
-
-
         // send the email
         await sendNotificationEmail(userInfo, platform, 'post approval', publishedPostLink);
-
 
         // update the hostUser's lastReceivingDate to the latest date
         await UserModel.updateOne(
