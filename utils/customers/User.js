@@ -132,12 +132,6 @@ const SocialMediaLinkSchema = new Schema({
     refreshTokenExpirationDate: {
         type: Date
     },
-    accessTokenStatus: {
-        type: String
-    },
-    refreshTokenStatus: {
-        type: String
-    },
     posts: [PostSchema]
 });
 
