@@ -508,7 +508,7 @@ export default async function handler(req, res) {
               "socialMediaLinks.$.posts.$[elem].postStatus": "published",
               "socialMediaLinks.$.posts.$[elem].postLink": publishedPostLink,
               "socialMediaLinks.$.posts.$[elem].postId": publishedPostLink.match(/\d+$/)[0],
-              "socialMediaLinks.$.posts.$[elem].publishingDate": new Date()
+              "socialMediaLinks.$.posts.$[elem].publishingDate": new Date() // update the publishing date to the latest date
             },
             $unset: { "socialMediaLinks.$.posts.$[elem].content": "" }
           },
