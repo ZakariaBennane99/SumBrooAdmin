@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import UserSchema from '../utils/customers/User';
 
-const connectUserDB = new Promise((resolve, reject) => {
+export const connectUserDB = new Promise((resolve, reject) => {
   const existingConnection = mongoose.connections.find(connection => 
     connection.name === process.env.MONGO_DB_USERS
   );
@@ -28,5 +28,3 @@ const connectUserDB = new Promise((resolve, reject) => {
     reject(err);
   });
 });
-
-export default connectUserDB;
