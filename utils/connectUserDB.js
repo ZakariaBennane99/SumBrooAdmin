@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { UserSchema } from '../utils/customers/User'
+import UserSchema from '../utils/customers/User';
 
 const connectUserDB = new Promise((resolve, reject) => {
   const existingConnection = mongoose.connections.find(connection => 
