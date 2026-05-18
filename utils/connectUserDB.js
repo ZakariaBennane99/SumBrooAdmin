@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import { UserSchema } from '../utils/customers/User'
 
 const connectUserDB = new Promise((resolve, reject) => {
-  // Check if a connection to the userDB already exists
   const existingConnection = mongoose.connections.find(connection => 
     connection.name === process.env.MONGO_DB_USERS
   );
@@ -13,7 +12,6 @@ const connectUserDB = new Promise((resolve, reject) => {
     return resolve(UserModel);
   }
 
-  // If no existing connection, create a new one
   const userDbConnection = mongoose.createConnection(process.env.MONGO_DB_USERS, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -31,4 +29,4 @@ const connectUserDB = new Promise((resolve, reject) => {
   });
 });
 
-export { connectUserDB };
+export default connectUserDB;
