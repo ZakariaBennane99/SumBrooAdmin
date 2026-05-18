@@ -1,7 +1,10 @@
-/*
+import React from 'react';
 
-Not needed now. When you validate with Pinterest, you can add other social media 
-plaforms. Then ADD ANOTHER ATTRIBUTE IN THE USER'S DB SCHEMA that 
-tells you if the user has applied to any of the available platforms 
-
-*/
+export default function ExistingApplications() {
+    return (
+        <div>
+            <h1>Existing Applications</h1>
+            <p>This page is under construction. Check back later!</p>
+        </div>
+    );
+}
