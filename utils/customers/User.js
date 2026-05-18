@@ -3,7 +3,7 @@ import { Schema, model } from "mongoose";
 const MediaContentSchema = new Schema({
     mediaType: {
         type: String,
-        enum: ["image", "video", "audio"], // example media types
+        enum: ["image", "video", "audio"],
         required: true
     },
     awsLink: {
@@ -31,10 +31,7 @@ const PinterestTextualDataSchema = new Schema({
 });
 
 const TextualDataSchema = new Schema({
-    pinterest: PinterestTextualDataSchema,
-    // Other platforms' specific schemas can be added here
-    // For example:
-    // tiktok: TikTokTextualDataSchema,
+    pinterest: PinterestTextualDataSchema
 });
 
 const PostContentSchema = new Schema({
@@ -55,13 +52,10 @@ const PostSchema = new Schema({
         type: String
     },
     platform: String,
-    postLink: String, // for published posts
-    postId: String, // for published posts: post ID from the platform API
+    postLink: String,
+    postId: String,
     publishingDate: Date,
-    // before the review, this represents the date at which 
-    // user hit publish after the review this should be 
-    // updated to the actual publishing date (in case of accepting the post)
-    content: PostContentSchema, // after publishing remove the content
+    content: PostContentSchema,
     targetingNiche: {
         type: String,
         required: true
@@ -70,7 +64,7 @@ const PostSchema = new Schema({
         type: [String],
         required: true
     },
-    comment: String, // for rejected posts
+    comment: String,
     analytics: {
         type: Schema.Types.Mixed
     }
@@ -88,15 +82,7 @@ const SocialMediaLinkSchema = new Schema({
     profileStatus: {
         type: String,
         enum: ["inReview", "pendingPay", "pendingAuth", "active", "canceled", "authExpired"],
-        // "New": profile is available to be applied for.
-        // "InReview": profile is in review.
-        // "Disabled": profile disabled by admin for quality and other issues.(rare case)
-        // "Active": profile is fully active. 
-        // "Pending": awaiting user payment
-        // Settings > Linked Accounts, or he/she can click on the manage billing and pay from there. 
         required: true
-        // If rejected, we remove the profile and send him a message on why 
-        // we rejected him and that when he fulfills the reqs, he can a send a profile linking req
     }, 
     pricePlans: {
         type: [String]
@@ -148,15 +134,7 @@ const UserSchema = new Schema({
     accountStatus: {
         type: String,
         enum: ["inReview", "disabled", "active", "pending"],
-        // "inReview": account is being reviewed.
-        // "Disabled": account has been disabled by admin for quality and other issues.(rare case)
-        // "Active": account is fully active.
-        // "Pending": awaiting user payment/onboarding before activation. You'll have to send an email
-        // in which you direct them to pay first, then start onboarding. The email link expires after
-        // 48H after which the user is deleted from the DB.
         required: true
-        // If rejected, we remove the user entirely and send him a message on why 
-        // we rejected him and that when he fulfills the reqs, he can create an account again
     }, 
     password: {
         type: String
@@ -179,6 +157,4 @@ const UserSchema = new Schema({
     socialMediaLinks: [SocialMediaLinkSchema]
 });
 
-
-
-export { UserSchema };
+export default UserSchema;
